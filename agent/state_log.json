@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "713dc1d2": {
+      "task_id": "713dc1d2",
+      "goal": "say hello",
+      "status": "completed",
+      "start_time": 1784374898.4407692,
+      "end_time": 1784374904.681216,
+      "steps": [
+        {
+          "step": 1,
+          "tool": "send_message",
+          "description": "Send a message to myself to say hello",
+          "status": "completed",
+          "start_time": 1784374904.2634866,
+          "end_time": 1784374904.6791852,
+          "result": "Could not open sms."
+        }
+      ],
+      "workers": []
+    }
+  }
+}

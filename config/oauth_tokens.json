@@ -1,0 +1,11 @@
+{
+  "google_oauth": {
+    "access_token": "ya29.a0AfH6SMD_mock_token_gmail",
+    "refresh_token": "1//0g_mock_refresh",
+    "scope": "https://www.googleapis.com/auth/gmail.send"
+  },
+  "hubspot_oauth": {
+    "access_token": "pat-na1-mock-hubspot-token",
+    "scope": "contacts"
+  }
+}

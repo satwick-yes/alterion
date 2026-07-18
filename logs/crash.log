@@ -1,0 +1,755 @@
+C:\Users\satwi\Downloads\alterion\actions\file_processor.py:30: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+[JARVIS] 🔌 Connecting...
+INFO:vector_memory:[VectorMemory] Loaded 1 memory vectors.
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...
+[JARVIS] ⚠️ 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+Traceback (most recent call last):
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1097, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.; then sent 1008 (policy violation) models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\satwi\Downloads\alterion\main.py", line 1116, in run
+    async with (
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\live.py", line 1107, in connect
+    errors.APIError.raise_error(code, reason, None)
+  File "C:\Users\satwi\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\google\genai\errors.py", line 188, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1008 None. models/gemini-2.5-pro is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ModelService.
+[JARVIS] 🔄 Disconnected.
+[JARVIS] 🔌 Connecting...

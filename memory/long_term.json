@@ -1,0 +1,35 @@
+{
+  "identity": {
+    "creator_name": {
+      "value": "Satwick Shaw",
+      "updated": "2026-07-06"
+    },
+    "name": {
+      "value": "Satwick Shaw",
+      "updated": "2026-07-07"
+    },
+    "language": {
+      "value": "English",
+      "updated": "2026-07-19"
+    }
+  },
+  "preferences": {
+    "last_video_platform": {
+      "value": "YouTube",
+      "updated": "2026-07-18"
+    },
+    "last_browser": {
+      "value": "Brave",
+      "updated": "2026-07-18"
+    }
+  },
+  "projects": {},
+  "relationships": {},
+  "wishes": {},
+  "notes": {
+    "phone_pin": {
+      "value": "0718",
+      "updated": "2026-07-19"
+    }
+  }
+}

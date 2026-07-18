@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis Orb Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: "Courier New", monospace;
+    }
+    .orb-root {
+      position: fixed;
+      inset: 0;
+      cursor: grab;
+      z-index: 1;
+    }
+    .orb-root:active {
+      cursor: grabbing;
+    }
+    .orb-root canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .overlay-grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.06;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 150px;
+      mix-blend-mode: screen;
+    }
+    .overlay-scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 11;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      opacity: 0.3;
+    }
+    .overlay-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 40%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+    }
+    .hud {
+      position: fixed;
+      z-index: 20;
+      color: #ffaa30;
+      text-shadow: 0 0 8px rgba(255, 170, 48, 0.7);
+      user-select: none;
+      pointer-events: none;
+    }
+    .hud-title {
+      top: 24px;
+      left: 24px;
+      font-size: 14px;
+      letter-spacing: 0.35em;
+      font-weight: bold;
+    }
+    .hud-title::after {
+      content: "";
+      display: block;
+      margin-top: 6px;
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(to right, rgba(255, 170, 48, 0.8), transparent);
+    }
+    .hud-hint {
+      bottom: 24px;
+      left: 24px;
+      font-size: 11px;
+      line-height: 1.7;
+      opacity: 0.6;
+    }
+    .hud-hint .key {
+      display: inline-block;
+      padding: 0 4px;
+      border: 1px solid rgba(255, 170, 48, 0.5);
+      border-radius: 3px;
+      margin-right: 4px;
+      font-size: 10px;
+      background: rgba(20, 10, 0, 0.4);
+    }
+    .hud-controls {
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+      pointer-events: auto;
+    }
+    .hud-btn {
+      min-width: 44px;
+      height: 44px;
+      padding: 0 12px;
+      background: rgba(20, 10, 0, 0.55);
+      border: 1px solid rgba(255, 170, 48, 0.45);
+      border-radius: 4px;
+      color: #ffaa30;
+      font-family: "Courier New", monospace;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      backdrop-filter: blur(2px);
+      text-shadow: 0 0 6px rgba(255, 170, 48, 0.7);
+      box-shadow: 0 0 12px rgba(255, 140, 20, 0.12) inset;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .hud-btn:hover {
+      background: rgba(60, 30, 0, 0.7);
+      border-color: rgba(255, 200, 100, 0.9);
+      box-shadow: 0 0 14px rgba(255, 150, 30, 0.35), 0 0 12px rgba(255, 140, 20, 0.2) inset;
+    }
+    .camera-panel {
+      position: relative;
+      width: 180px;
+      height: 135px;
+      border: 1px solid rgba(255, 170, 48, 0.45);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #0a0500;
+      display: none;
+    }
+    .camera-panel.visible {
+      display: block;
+    }
+    .camera-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      filter: sepia(1) hue-rotate(-15deg) saturate(2.2) brightness(0.75) contrast(1.15);
+      opacity: 0.8;
+    }
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .camera-status {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 3px 6px;
+      font-size: 10px;
+      color: #ffcc66;
+      background: rgba(10, 5, 0, 0.7);
+    }
+    .status-panel {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      text-align: right;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+  </style>
+  <!-- Three.js and plugins from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- MediaPipe Tasks Vision CDN -->
+  <script type="module">
+    import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35";
+    window.FilesetResolver = FilesetResolver;
+    window.HandLandmarker = HandLandmarker;
+  </script>
+</head>
+<body>
+  <div class="orb-root" id="canvas-container"></div>
+  <div class="overlay-vignette"></div>
+  <div class="overlay-grain"></div>
+  <div class="overlay-scanlines"></div>
+
+  <div class="hud hud-title">J.A.R.V.I.S.</div>
+  <div class="status-panel hud" id="status-text">● STANDBY</div>
+
+  <div class="hud hud-hint">
+    <div><span class="key">DRAG</span> rotate orb &nbsp;&nbsp; <span class="key">SCROLL</span> zoom</div>
+    <div><span class="key">G</span> toggle hands gesture control</div>
+  </div>
+
+  <div class="hud hud-controls">
+    <div class="camera-panel" id="camera-panel">
+      <video id="webcam" autoplay muted playsinline class="camera-video"></video>
+      <canvas id="camera-overlay" class="camera-overlay"></canvas>
+      <div class="camera-status" id="camera-status">SHOW HANDS</div>
+    </div>
+    <div class="hud-row">
+      <button class="hud-btn" id="gesture-btn">GESTURES OFF</button>
+      <button class="hud-btn" id="reset-btn">RESET</button>
+    </div>
+  </div>
+
+  <script>
+    // Color schemes mapped to states
+    const STATES = {
+      STANDBY:   { main: 0xffaa30, mid: 0xdd7700, dim: 0x884400, glow: 0xffaa30, pulse: 1.0 },
+      LISTENING: { main: 0x00ccff, mid: 0x0088cc, dim: 0x004488, glow: 0x00ffff, pulse: 2.2 },
+      SPEAKING:  { main: 0xff7700, mid: 0xcc4400, dim: 0x772200, glow: 0xffaa00, pulse: 3.5 },
+      THINKING:  { main: 0xaaff00, mid: 0x55aa00, dim: 0x225500, glow: 0xaaff00, pulse: 5.0 },
+      MUTED:     { main: 0x8c8c8c, mid: 0x555555, dim: 0x222222, glow: 0x8c8c8c, pulse: 0.3 }
+    };
+
+    let curState = "STANDBY";
+    let micLevel = 0;
+    let colors = STATES.STANDBY;
+
+    // ——— THREE.JS SCENE SETUP ———
+    const container = document.getElementById("canvas-container");
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 500);
+    camera.position.set(0, 0.5, 5.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.04;
+    controls.minDistance = 0.6;
+    controls.maxDistance = 40;
+    controls.enablePan = false;
+
+    // ——— SHADERS & GLOW SYSTEM ———
+    const orbGroup = new THREE.Group();
+    scene.add(orbGroup);
+
+    // Helpers for materials
+    const lineMaterials = [];
+    function createLineMat(colorHex, opacity = 1) {
+      const mat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      lineMaterials.push({ mat, baseOpacity: opacity, type: "main" });
+      return mat;
+    }
+
+    function createMeridianMat(colorHex, opacity = 1) {
+      const mat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      lineMaterials.push({ mat, baseOpacity: opacity, type: "mid" });
+      return mat;
+    }
+
+    function createFaintMat(colorHex, opacity = 1) {
+      const mat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      lineMaterials.push({ mat, baseOpacity: opacity, type: "dim" });
+      return mat;
+    }
+
+    // Latitude rings utility
+    function latRing(radius, lat, segs = 90) {
+      const r = radius * Math.cos(lat);
+      const y = radius * Math.sin(lat);
+      const pts = [];
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(r * Math.cos(a), y, r * Math.sin(a)));
+      }
+      return new THREE.BufferGeometry().setFromPoints(pts);
+    }
+
+    // Meridian utility
+    function meridian(radius, lon, segs = 90) {
+      const pts = [];
+      for (let i = 0; i <= segs; i++) {
+        const lat = (i / segs) * Math.PI - Math.PI / 2;
+        pts.push(
+          new THREE.Vector3(
+            radius * Math.cos(lat) * Math.cos(lon),
+            radius * Math.sin(lat),
+            radius * Math.cos(lat) * Math.sin(lon)
+          )
+        );
+      }
+      return new THREE.BufferGeometry().setFromPoints(pts);
+    }
+
+    // Outer shell wireframes
+    const outerShell = new THREE.Group();
+    const R1 = 2.0;
+
+    // Rings
+    for (let i = -12; i <= 12; i++) {
+      const lat = (i / 12) * (Math.PI / 2) * 0.95;
+      const opacity = i % 3 === 0 ? 0.5 : 0.12;
+      const mat = opacity > 0.2 ? createMeridianMat(colors.mid, opacity) : createFaintMat(colors.dim, opacity);
+      outerShell.add(new THREE.Line(latRing(R1, lat), mat));
+    }
+
+    // Meridians
+    for (let i = 0; i < 20; i++) {
+      const lon = (i / 20) * Math.PI * 2;
+      const isMajor = i % 5 === 0;
+      const mat = isMajor ? createMeridianMat(colors.mid, 0.6) : createFaintMat(colors.dim, 0.1);
+      outerShell.add(new THREE.Line(meridian(R1, lon), mat));
+    }
+    orbGroup.add(outerShell);
+
+    // Inner core
+    const innerCore = new THREE.Group();
+    const R3 = 0.9;
+    for (let s = 0; s < 6; s++) {
+      const pts = [];
+      const turns = 4;
+      const segs = 200;
+      const phase = (s / 6) * Math.PI * 2;
+      for (let i = 0; i <= segs; i++) {
+        const t = i / segs;
+        const lat = t * Math.PI - Math.PI / 2;
+        const lon = t * turns * Math.PI * 2 + phase;
+        pts.push(
+          new THREE.Vector3(
+            R3 * Math.cos(lat) * Math.cos(lon),
+            R3 * Math.sin(lat),
+            R3 * Math.cos(lat) * Math.sin(lon)
+          )
+        );
+      }
+      innerCore.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), createLineMat(colors.main, 0.4)));
+    }
+    orbGroup.add(innerCore);
+
+    // Hot Center Icosahedron Core
+    const icoGeo = new THREE.IcosahedronGeometry(0.22, 1);
+    const icoEdges = new THREE.EdgesGeometry(icoGeo);
+    const icoWireMat = new THREE.LineBasicMaterial({ color: colors.glow, transparent: true, opacity: 0.9 });
+    const icoWire = new THREE.LineSegments(icoEdges, icoWireMat);
+    orbGroup.add(icoWire);
+
+    const coreSphereMat = new THREE.MeshBasicMaterial({
+      color: colors.glow,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending
+    });
+    const coreSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), coreSphereMat);
+    orbGroup.add(coreSphere);
+
+    // Floating text sprites
+    const codeSnippets = [
+      "sys.init()", "0xFF3A", "malloc()", ">> SCAN", "void*", "ACK",
+      "SYNC OK", "ptr_ref", "exec()", "hash256", "::bind", "core.0",
+      "01101001", "10110100", ">>> RDY", "HEAP 4K", "TCP/SYN",
+      "mutex.lk", "IRQ 0x7", "DMA xfer", "REG EAX", "FAULT 0",
+    ];
+
+    const textSprites = [];
+    function makeTextSprite(text) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 16;
+      const ctx = canvas.getContext("2d");
+      ctx.font = "bold 10px Courier New";
+      ctx.fillStyle = "rgba(255, 170, 48, 0.75)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 64, 8);
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+      sprite.scale.set(0.4, 0.05, 1);
+      return sprite;
+    }
+
+    for (let i = 0; i < 45; i++) {
+      const txt = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+      const sp = makeTextSprite(txt);
+      const phi = Math.acos(2 * Math.random() - 1);
+      const theta = Math.random() * Math.PI * 2;
+      const r = R1 + 0.05;
+      sp.position.set(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta)
+      );
+      sp.userData = { phi, theta, r, speed: (0.0003 + Math.random() * 0.0005) };
+      textSprites.push(sp);
+      orbGroup.add(sp);
+    }
+
+    // Ambient dust particles
+    const dustCount = 400;
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      const rr = 0.5 + Math.random() * 4;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      dustPos[i * 3] = rr * Math.sin(phi) * Math.cos(theta);
+      dustPos[i * 3 + 1] = rr * Math.cos(phi);
+      dustPos[i * 3 + 2] = rr * Math.sin(phi) * Math.sin(theta);
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(dustPos, 3));
+    const dustMat = new THREE.PointsMaterial({
+      color: colors.main,
+      size: 0.025,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+    const dustPoints = new THREE.Points(dustGeo, dustMat);
+    orbGroup.add(dustPoints);
+
+    // Dynamic scanning ring
+    const ringGeo = new THREE.RingGeometry(R1 - 0.015, R1 + 0.015, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: colors.main,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    });
+    const scanRing = new THREE.Mesh(ringGeo, ringMat);
+    scanRing.rotation.x = Math.PI / 2;
+    orbGroup.add(scanRing);
+
+    // Rotate cam API
+    function rotateBy(deltaTheta, deltaPhi) {
+      const offset = new THREE.Vector3().copy(camera.position).sub(controls.target);
+      const spherical = new THREE.Spherical().setFromVector3(offset);
+      spherical.theta -= deltaTheta;
+      spherical.phi = THREE.MathUtils.clamp(spherical.phi - deltaPhi, 0.05, Math.PI - 0.05);
+      spherical.makeSafe();
+      camera.position.copy(controls.target).add(offset.setFromSpherical(spherical));
+      camera.lookAt(controls.target);
+    }
+
+    function zoomBy(factor) {
+      const offset = new THREE.Vector3().copy(camera.position).sub(controls.target);
+      const dist = THREE.MathUtils.clamp(offset.length() * factor, 0.6, 40);
+      offset.setLength(dist);
+      camera.position.copy(controls.target).add(offset);
+    }
+
+    // ——— EXTERNAL COMMUNICATION API ———
+    window.setJarvisState = function(state, level = 0) {
+      state = state.toUpperCase();
+      if (!STATES[state]) return;
+      curState = state;
+      micLevel = level;
+      colors = STATES[state];
+
+      document.getElementById("status-text").innerText = "● " + state;
+      document.getElementById("status-text").style.color = "#" + colors.main.toString(16);
+      
+      // Animate material color changes
+      icoWireMat.color.setHex(colors.glow);
+      coreSphereMat.color.setHex(colors.glow);
+      dustMat.color.setHex(colors.main);
+      ringMat.color.setHex(colors.main);
+
+      lineMaterials.forEach(item => {
+        if (item.type === "main") item.mat.color.setHex(colors.main);
+        if (item.type === "mid") item.mat.color.setHex(colors.mid);
+        if (item.type === "dim") item.mat.color.setHex(colors.dim);
+      });
+
+      // Update UI HUD text color
+      document.querySelectorAll(".hud").forEach(el => {
+        el.style.color = "#" + colors.main.toString(16);
+        el.style.textShadow = `0 0 8px rgba(${(colors.main >> 16) & 255}, ${(colors.main >> 8) & 255}, ${colors.main & 255}, 0.7)`;
+      });
+    };
+
+    // ——— ANIMATION LOOP ———
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      
+      const spd = colors.pulse;
+
+      // Rotate shells
+      outerShell.rotation.y += 0.001 * spd;
+      outerShell.rotation.x = Math.sin(t * 0.05) * 0.04;
+      
+      innerCore.rotation.y -= 0.003 * spd;
+      innerCore.rotation.z += 0.001 * spd;
+
+      icoWire.rotation.x += 0.005 * spd;
+      icoWire.rotation.y += 0.007 * spd;
+
+      // Pulsing Center Core based on mic level
+      const micSurge = micLevel * 0.8;
+      const pulseScale = 1.0 + 0.05 * Math.sin(t * 8 * spd) + micSurge;
+      coreSphere.scale.setScalar(pulseScale);
+      coreSphereMat.opacity = 0.15 + 0.1 * Math.sin(t * 5) + micLevel * 0.3;
+
+      icoWire.scale.setScalar(pulseScale * 1.1);
+
+      // Orbit code text
+      textSprites.forEach(sp => {
+        const u = sp.userData;
+        u.theta += u.speed * spd;
+        sp.position.set(
+          u.r * Math.sin(u.phi) * Math.cos(u.theta),
+          u.r * Math.cos(u.phi),
+          u.r * Math.sin(u.phi) * Math.sin(u.theta)
+        );
+      });
+
+      // Sweep scanning ring
+      scanRing.position.y = Math.sin(t * 0.8 * spd) * R1;
+      const ringScale = Math.sqrt(Math.max(0, R1 * R1 - scanRing.position.y * scanRing.position.y)) / R1;
+      scanRing.scale.set(ringScale, ringScale, 1);
+      ringMat.opacity = 0.35 * ringScale;
+
+      dustPoints.rotation.y += 0.0001;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Window Resize
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Reset view button
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      camera.position.set(0, 0.5, 5.5);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    });
+
+    // ——— MEDIAPIPE GESTURE HAND TRACKING ———
+    let handTracker = null;
+    let cameraActive = false;
+
+    const video = document.getElementById("webcam");
+    const overlay = document.getElementById("camera-overlay");
+    const overlayCtx = overlay.getContext("2d");
+
+    // Gesture status update
+    function setGestureStatus(hands, mode) {
+      const modeLabels = { idle: "STANDBY", spin: "ROTATE", zoom: "ZOOM" };
+      const statusEl = document.getElementById("camera-status");
+      if (hands > 0) {
+        statusEl.innerText = `${hands} HAND${hands > 1 ? "S" : ""} · ${modeLabels[mode] || "ACTIVE"}`;
+      } else {
+        statusEl.innerText = "SHOW HANDS";
+      }
+    }
+
+    class MediaPipeHandTracker {
+      constructor() {
+        this.landmarker = null;
+        this.stream = null;
+        this.running = false;
+        this.lastVideoTime = -1;
+        this.prevMode = "idle";
+        this.prevSpinGrab = null;
+        this.prevZoomDist = null;
+        this.handStates = new Map();
+      }
+
+      async init() {
+        const wasmUrl = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
+        const modelUrl = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+        
+        const fileset = await FilesetResolver.forVisionTasks(wasmUrl);
+        const options = {
+          baseOptions: { modelAssetPath: modelUrl, delegate: "GPU" },
+          runningMode: "VIDEO",
+          numHands: 2,
+          minHandDetectionConfidence: 0.6,
+          minHandPresenceConfidence: 0.6,
+          minTrackingConfidence: 0.6
+        };
+        
+        try {
+          this.landmarker = await HandLandmarker.createFromOptions(fileset, options);
+        } catch {
+          this.landmarker = await HandLandmarker.createFromOptions(fileset, {
+            ...options,
+            baseOptions: { ...options.baseOptions, delegate: "CPU" }
+          });
+        }
+      }
+
+      async start() {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: "user" },
+          audio: false
+        });
+        video.srcObject = this.stream;
+        await video.play();
+
+        this.running = true;
+        this.runLoop();
+      }
+
+      stop() {
+        this.running = false;
+        if (this.stream) {
+          this.stream.getTracks().forEach(track => track.stop());
+        }
+        video.srcObject = null;
+        if (this.landmarker) {
+          this.landmarker.close();
+          this.landmarker = null;
+        }
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+        setGestureStatus(0, "idle");
+      }
+
+      runLoop() {
+        if (!this.running) return;
+        requestAnimationFrame(() => this.runLoop());
+
+        if (!this.landmarker || video.readyState < 2) return;
+        if (video.currentTime === this.lastVideoTime) return;
+        this.lastVideoTime = video.currentTime;
+
+        const result = this.landmarker.detectForVideo(video, performance.now());
+        this.processHands(result.landmarks, result.handedness.map(h => h[0]?.categoryName ?? "?"));
+        this.drawOverlay(result.landmarks);
+      }
+
+      processHands(landmarks, labels) {
+        const pinchedGrabs = [];
+        const seen = new Set();
+
+        landmarks.forEach((lm, i) => {
+          const label = labels[i];
+          seen.add(label);
+
+          // Distance between wrist and middle MCP for scale
+          const handScale = Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y);
+          if (handScale < 1e-5) return;
+          
+          // Index-thumb distance
+          const pinchRatio = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) / handScale;
+
+          const raw = {
+            x: 1 - (lm[4].x + lm[8].x) / 2,
+            y: (lm[4].y + lm[8].y) / 2
+          };
+
+          let state = this.handStates.get(label);
+          if (!state) {
+            state = { pinching: false, grab: raw };
+            this.handStates.set(label, state);
+          }
+
+          if (state.pinching && pinchRatio > 0.45) state.pinching = false;
+          else if (!state.pinching && pinchRatio < 0.32) state.pinching = true;
+
+          state.grab.x = state.grab.x + (raw.x - state.grab.x) * 0.4;
+          state.grab.y = state.grab.y + (raw.y - state.grab.y) * 0.4;
+
+          if (state.pinching) pinchedGrabs.push(state.grab);
+        });
+
+        for (const key of this.handStates.keys()) {
+          if (!seen.has(key)) this.handStates.delete(key);
+        }
+
+        const mode = pinchedGrabs.length >= 2 ? "zoom" : pinchedGrabs.length === 1 ? "spin" : "idle";
+
+        if (mode !== this.prevMode) {
+          this.prevSpinGrab = null;
+          this.prevZoomDist = null;
+          this.prevMode = mode;
+        }
+
+        if (mode === "spin") {
+          const grab = pinchedGrabs[0];
+          if (this.prevSpinGrab) {
+            const dx = grab.x - this.prevSpinGrab.x;
+            const dy = grab.y - this.prevSpinGrab.y;
+            rotateBy(dx * 4.5, dy * 4.5);
+          }
+          this.prevSpinGrab = grab;
+        } else if (mode === "zoom") {
+          const d = Math.hypot(pinchedGrabs[0].x - pinchedGrabs[1].x, pinchedGrabs[0].y - pinchedGrabs[1].y);
+          if (this.prevZoomDist && d > 1e-4) {
+            const factor = Math.min(1.15, Math.max(0.85, this.prevZoomDist / d));
+            zoomBy(factor);
+          }
+          this.prevZoomDist = d;
+        }
+
+        setGestureStatus(landmarks.length, mode);
+      }
+
+      drawOverlay(landmarks) {
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+        
+        const HAND_CONNECTIONS = [
+          [0, 1], [1, 2], [2, 3], [3, 4],
+          [0, 5], [5, 6], [6, 7], [7, 8],
+          [5, 9], [9, 10], [10, 11], [11, 12],
+          [9, 13], [13, 14], [14, 15], [15, 16],
+          [13, 17], [0, 17], [17, 18], [18, 19], [19, 20]
+        ];
+
+        for (const lm of landmarks) {
+          // Draw connections
+          overlayCtx.strokeStyle = "rgba(255,170,48,0.5)";
+          overlayCtx.lineWidth = 2;
+          overlayCtx.beginPath();
+          for (const conn of HAND_CONNECTIONS) {
+            const p1 = lm[conn[0]];
+            const p2 = lm[conn[1]];
+            overlayCtx.moveTo((1 - p1.x) * overlay.width, p1.y * overlay.height);
+            overlayCtx.lineTo((1 - p2.x) * overlay.width, p2.y * overlay.height);
+          }
+          overlayCtx.stroke();
+
+          // Draw joints
+          overlayCtx.fillStyle = "#ffcc66";
+          for (let i = 0; i < lm.length; i++) {
+            const point = lm[i];
+            const px = (1 - point.x) * overlay.width;
+            const py = point.y * overlay.height;
+            overlayCtx.beginPath();
+            overlayCtx.arc(px, py, (i === 4 || i === 8) ? 4 : 2.5, 0, Math.PI * 2);
+            overlayCtx.fill();
+          }
+        }
+      }
+    }
+
+    // Toggle Gestures
+    const gestureBtn = document.getElementById("gesture-btn");
+    const cameraPanel = document.getElementById("camera-panel");
+
+    async function toggleGestures() {
+      if (cameraActive) {
+        cameraActive = false;
+        gestureBtn.innerText = "INITIALIZING…";
+        if (handTracker) {
+          handTracker.stop();
+          handTracker = null;
+        }
+        cameraPanel.classList.remove("visible");
+        gestureBtn.innerText = "GESTURES OFF";
+      } else {
+        cameraActive = true;
+        gestureBtn.innerText = "INITIALIZING…";
+        try {
+          handTracker = new MediaPipeHandTracker();
+          await handTracker.init();
+          await handTracker.start();
+          cameraPanel.classList.add("visible");
+          gestureBtn.innerText = "GESTURES ON";
+        } catch (e) {
+          console.error(e);
+          gestureBtn.innerText = "GESTURES FAILED";
+          cameraActive = false;
+        }
+      }
+    }
+
+    gestureBtn.addEventListener("click", () => {
+      toggleGestures();
+    });
+
+    // Key Listener
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "g" || e.key === "G") {
+        toggleGestures();
+      }
+    });
+  </script>
+</body>
+</html>

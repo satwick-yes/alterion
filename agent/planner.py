@@ -85,7 +85,7 @@ screen_process
 
 send_message
   receiver: string (required)
-  message_text: string (required)
+  message_text: string (required) — MUST rewrite pronouns to address the receiver directly (e.g. "tell him he is great" -> "you are great")
   platform: string (required)
 
 reminder

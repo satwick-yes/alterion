@@ -1073,6 +1073,23 @@ class JarvisLive:
     async def _listen_audio(self):
         print("[JARVIS] 🎤 Mic started")
         loop = asyncio.get_event_loop()
+        
+        # Biometrics state
+        from core.biometrics import voice_biometrics
+        self.auth_buffer = b""
+        self.auth_backlog = b""
+        # Default to authorized if no profile exists, otherwise False until verified
+        self.is_authorized = True if voice_biometrics.enrolled_embedding is None else False
+
+        def _verify_worker(pcm_data):
+            try:
+                is_match = voice_biometrics.verify_audio_chunk(pcm_data, sample_rate=SEND_SAMPLE_RATE)
+                if is_match:
+                    self.is_authorized = True
+                else:
+                    self.is_authorized = False
+            except Exception as e:
+                pass
 
         def _enqueue_safely(data):
             try:
@@ -1091,9 +1108,32 @@ class JarvisLive:
                 if hasattr(self, 'ui') and hasattr(self.ui, 'set_mic_level'):
                     self.ui.set_mic_level(vol)
 
-            if not self.ui.muted and getattr(self, 'is_busy', False) == False:
+            if not getattr(self.ui, 'muted', False) and not getattr(self, 'is_busy', False):
                 data = indata.tobytes()
-                loop.call_soon_threadsafe(_enqueue_safely, data)
+                
+                # Apply Voice Biometrics Filtering
+                if voice_biometrics.enrolled_embedding is not None:
+                    self.auth_buffer += data
+                    # Check every 1 second of audio (SEND_SAMPLE_RATE * 2 bytes for 16-bit PCM)
+                    if len(self.auth_buffer) >= SEND_SAMPLE_RATE * 2:
+                        chunk = self.auth_buffer
+                        self.auth_buffer = b""
+                        import threading
+                        threading.Thread(target=_verify_worker, args=(chunk,), daemon=True).start()
+                    
+                    if self.is_authorized:
+                        # Flush backlog if we just became authorized
+                        if self.auth_backlog:
+                            loop.call_soon_threadsafe(_enqueue_safely, self.auth_backlog)
+                            self.auth_backlog = b""
+                        loop.call_soon_threadsafe(_enqueue_safely, data)
+                    else:
+                        # Accumulate backlog up to 2 seconds so we don't drop the start of the sentence
+                        self.auth_backlog += data
+                        if len(self.auth_backlog) > SEND_SAMPLE_RATE * 4:
+                            self.auth_backlog = self.auth_backlog[-(SEND_SAMPLE_RATE * 4):]
+                else:
+                    loop.call_soon_threadsafe(_enqueue_safely, data)
 
         try:
             with sd.InputStream(

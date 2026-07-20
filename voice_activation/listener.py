@@ -134,10 +134,23 @@ def main():
                 log_msg(f"Recognized: {text}")
                 
                 if "jarvis" in text:
-                    log_msg(f"Wake word matched: {text}")
-                    launch_jarvis()
-                    # Wait for Jarvis to start before listening again
-                    time.sleep(2)
+                    # Verify the speaker's voice using our biometrics module
+                    try:
+                        from core.biometrics import voice_biometrics
+                        # Convert to 16kHz 16-bit PCM for verification
+                        pcm_data = audio.get_raw_data(convert_rate=16000, convert_width=2)
+                        is_match = voice_biometrics.verify_audio_chunk(pcm_data, sample_rate=16000)
+                    except Exception as e:
+                        log_msg(f"Voice verification error: {e}")
+                        is_match = True # Fallback if model fails or no profile exists
+                        
+                    if is_match:
+                        log_msg(f"Wake word matched and VOICE VERIFIED: {text}")
+                        launch_jarvis()
+                        # Wait for Jarvis to start before listening again
+                        time.sleep(2)
+                    else:
+                        log_msg("Wake word heard, but VOICE REJECTED (Unauthorized speaker).")
             except sr.UnknownValueError:
                 # Speech was unintelligible
                 pass

@@ -27,3 +27,8 @@ next-env.d.ts
 
 # Secrets and Configs
 config/api_keys.json
+
+# Voice Biometrics and Models
+config/user_voice_profile.pt
+config/temp_enroll.wav
+models/

@@ -358,8 +358,11 @@ class AgentExecutor:
                         state_manager.update_task_status(task_id, TaskState.CANCELLED)
                         break
                     try:
+                        from agent.orchestrator import semantic_router
+                        step_companion = semantic_router.route_intent(goal=desc, tool_name=tool)
+                        
                         state_manager.add_task_step(task_id, step_num, tool, desc)
-                        result = _call_tool(tool, params, speak, self.companion_name)
+                        result = _call_tool(tool, params, speak, step_companion.name)
                         step_results[step_num] = result 
                         completed_steps.append(step)
                         state_manager.update_task_step_status(task_id, step_num, "completed", result)

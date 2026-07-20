@@ -28,6 +28,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QProgressBar,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebChannel import QWebChannel
+
+from actions.gesture_controller import GestureController
 
 def _base_dir() -> Path:
     if getattr(sys, "frozen", False):
@@ -271,6 +274,12 @@ class HudCanvas(QWebEngineView):
         
         # Automatically grant WebRTC camera/audio permissions
         self.page().featurePermissionRequested.connect(self._handle_permission)
+
+        # Setup QWebChannel for gesture controller
+        self.channel = QWebChannel()
+        self.gesture_controller = GestureController()
+        self.channel.registerObject("gesture_controller", self.gesture_controller)
+        self.page().setWebChannel(self.channel)
 
         self._tmr = QTimer(self)
         self._tmr.timeout.connect(self._step)

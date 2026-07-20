@@ -10,4 +10,4 @@ System Optimization Summary:
 
 3. System Configuration:
    - Previous State: Default system settings and potential background processes.
-   - Current State: Verified and adjusted key system settings for efficiency; potential non-essential background processes minimized.
+   - Current State: Verified and adjusted key system settings for efficiency; potential non-essential background processes minimized.https://github.com/satwick-yes/alterion.git

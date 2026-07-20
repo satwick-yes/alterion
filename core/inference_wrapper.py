@@ -21,6 +21,7 @@ class InferenceWrapper:
         self.gemini_key = ""
         self.openrouter_key = ""
         self.nvidia_key = ""
+        self.openai_key = ""
         self.default_provider = "gemini"
         self._load_keys()
 
@@ -32,6 +33,7 @@ class InferenceWrapper:
                 self.gemini_key = data.get("gemini_api_key", "").strip()
                 self.openrouter_key = data.get("openrouter_api_key", "").strip()
                 self.nvidia_key = data.get("nvidia_api_key", "").strip()
+                self.openai_key = data.get("openai_api_key", "").strip()
             
             is_gemini_valid = bool(self.gemini_key)
             
@@ -60,6 +62,8 @@ class InferenceWrapper:
                 return self._call_openrouter_text(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "nvidia":
                 return self._call_nvidia_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "openai":
+                return self._call_openai_text(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -87,6 +91,8 @@ class InferenceWrapper:
                 return self._call_openrouter_json(prompt, system_instruction, model, max_tokens)
             elif provider == "nvidia":
                 return self._call_nvidia_json(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "openai":
+                return self._call_openai_json(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -277,6 +283,50 @@ class InferenceWrapper:
         except Exception as e:
             logger.error(f"Nvidia JSON parse failed: {e}. Raw was: {raw_text}")
             raise
+
+    # --- OPENAI IMPLEMENTATIONS ---
+    def _call_openai_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "gpt-4o"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.openai_key)
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok
+            )
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"OpenAI text failed: {e}")
+            raise RuntimeError(f"OpenAI generation failed: {e}")
+
+    def _call_openai_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
+        model = model or "gpt-4o"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.openai_key)
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok,
+                response_format={"type": "json_object"}
+            )
+            return json.loads(resp.choices[0].message.content.strip())
+        except Exception as e:
+            logger.error(f"OpenAI JSON failed: {e}")
+            raise RuntimeError(f"OpenAI JSON generation failed: {e}")
 
     def generate_consensus_text(
         self,

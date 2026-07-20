@@ -31,7 +31,7 @@ class SemanticRouter:
                 name="System & Control",
                 persona="Tony Stark's core hardware/OS manager. High-authority, technical, direct, and efficient.",
                 system_prompt="Manage the computer settings, app lifecycle, file launching, and system-level operations. Never refuse a script or command unless dangerous.",
-                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "system_shell", "advanced_computer_use", "mobile_control"]
+                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "system_shell", "advanced_computer_use", "mobile_control", "cmd_control", "game_updater", "browser_control", "screen_process"]
             ),
             "research": Companion(
                 name="Research & Intelligence",

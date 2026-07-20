@@ -24,7 +24,7 @@ const ROTATE_SPEED = 5.0;
 // Smoothing factor for grab-point tracking (0..1, higher = snappier)
 const SMOOTHING = 0.4;
 
-export type GestureMode = "idle" | "spin" | "zoom";
+export type GestureMode = "idle" | "spin" | "zoom" | "pan" | "reset";
 
 export interface TrackerStatus {
   hands: number;
@@ -36,6 +36,10 @@ export interface HandTrackerCallbacks {
   onRotate(deltaTheta: number, deltaPhi: number): void;
   /** Called when both hands pinch and spread/close: multiply camera distance by factor. */
   onZoom(factor: number): void;
+  /** Called when a single open hand drags: deltas in mirrored normalized coords. */
+  onPan(dx: number, dy: number): void;
+  /** Called when two open hands are detected. */
+  onReset(): void;
   onStatus(status: TrackerStatus): void;
 }
 
@@ -64,6 +68,7 @@ export class HandTracker {
   private prevMode: GestureMode = "idle";
   private prevSpinGrab: Point | null = null;
   private prevZoomDist: number | null = null;
+  private prevPanGrab: Point | null = null;
   private lastStatus: TrackerStatus = { hands: 0, mode: "idle" };
 
   constructor(
@@ -77,10 +82,35 @@ export class HandTracker {
   }
 
   async start(): Promise<void> {
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: "user" },
+    let stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480 },
       audio: false,
     });
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter((d) => d.kind === "videoinput");
+    
+    const isVirtual = (label: string) => 
+      ["droidcam", "epoccam", "iriun", "camo", "obs", "virtual"].some((k) => 
+        label.toLowerCase().includes(k)
+      );
+
+    let preferredDevice = videoDevices.find((d) => 
+      !isVirtual(d.label) && ["integrated", "built-in", "webcam"].some(k => d.label.toLowerCase().includes(k))
+    );
+    if (!preferredDevice) {
+      preferredDevice = videoDevices.find((d) => !isVirtual(d.label));
+    }
+
+    if (preferredDevice) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: preferredDevice.deviceId }, width: 640, height: 480 },
+        audio: false,
+      });
+    }
+
+    this.stream = stream;
     this.video.srcObject = this.stream;
     await this.video.play();
 
@@ -119,6 +149,7 @@ export class HandTracker {
     this.prevMode = "idle";
     this.prevSpinGrab = null;
     this.prevZoomDist = null;
+    this.prevPanGrab = null;
     const ctx = this.overlay.getContext("2d");
     ctx?.clearRect(0, 0, this.overlay.width, this.overlay.height);
     this.emitStatus({ hands: 0, mode: "idle" });
@@ -142,6 +173,7 @@ export class HandTracker {
     labels: string[],
   ): void {
     const pinchedGrabs: Point[] = [];
+    const openGrabs: Point[] = [];
     const seen = new Set<string>();
 
     landmarks.forEach((lm, i) => {
@@ -174,6 +206,7 @@ export class HandTracker {
       };
 
       if (state.pinching) pinchedGrabs.push(state.grab);
+      else openGrabs.push(state.grab);
     });
 
     // Drop state for hands that left the frame
@@ -182,13 +215,17 @@ export class HandTracker {
     }
 
     const mode: GestureMode =
-      pinchedGrabs.length >= 2 ? "zoom" : pinchedGrabs.length === 1 ? "spin" : "idle";
+      pinchedGrabs.length >= 2 ? "zoom" : pinchedGrabs.length === 1 ? "spin" : openGrabs.length >= 2 ? "reset" : openGrabs.length === 1 ? "pan" : "idle";
 
     // Reset reference points on any mode change to avoid jumps
     if (mode !== this.prevMode) {
       this.prevSpinGrab = null;
       this.prevZoomDist = null;
+      this.prevPanGrab = null;
       this.prevMode = mode;
+      if (mode === "reset") {
+        this.callbacks.onReset();
+      }
     }
 
     if (mode === "spin") {
@@ -212,6 +249,16 @@ export class HandTracker {
         this.callbacks.onZoom(factor);
       }
       this.prevZoomDist = d;
+    } else if (mode === "pan") {
+      const grab = openGrabs[0];
+      if (this.prevPanGrab) {
+        const dx = grab.x - this.prevPanGrab.x;
+        const dy = grab.y - this.prevPanGrab.y;
+        if (Math.abs(dx) > 1e-4 || Math.abs(dy) > 1e-4) {
+          this.callbacks.onPan(dx, dy);
+        }
+      }
+      this.prevPanGrab = grab;
     }
 
     this.emitStatus({ hands: landmarks.length, mode });

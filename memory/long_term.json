@@ -21,6 +21,10 @@
     "last_browser": {
       "value": "Brave",
       "updated": "2026-07-18"
+    },
+    "favorite_food": {
+      "value": "biryani",
+      "updated": "2026-07-20"
     }
   },
   "projects": {},
@@ -30,6 +34,10 @@
     "phone_pin": {
       "value": "0718",
       "updated": "2026-07-19"
+    },
+    "useful_research_tools": {
+      "value": "Jarvis tools provides good science data and research papers",
+      "updated": "2026-07-20"
     }
   }
 }

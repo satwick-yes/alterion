@@ -13,6 +13,7 @@ export interface OrbSceneApi {
   zoomIn(): void;
   zoomOut(): void;
   resetView(): void;
+  panBy(dx: number, dy: number): void;
   dispose(): void;
 }
 
@@ -41,7 +42,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
   composer.addPass(new RenderPass(scene, camera));
 
   const bloom = new UnrealBloomPass(
-    new THREE.Vector2(width, height),
+    new THREE.Vector2(width / 4, height / 4), // Reduced resolution for performance
     1.8, // strength
     0.4, // radius
     0.2, // threshold
@@ -482,7 +483,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
 
   // On outer sphere — dense text coverage
   const textOuter = scatterText(
-    1200,
+    120, // Reduced from 1200 for performance
     () => 0.04 + Math.random() * 0.04,
     () => R1 + 0.03 + Math.random() * 0.08,
     [0.0002, 0.0008],
@@ -491,7 +492,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
 
   // On inner core — more text
   const textInner = scatterText(
-    100,
+    30, // Reduced from 100
     () => 0.03 + Math.random() * 0.03,
     () => R3 + 0.02,
     [0.0005, 0.001],
@@ -500,7 +501,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
 
   // Floating ambient text between shells
   const textAmbient = scatterText(
-    400,
+    50, // Reduced from 400
     () => 0.03,
     () => R3 + 0.2 + Math.random() * (R1 - R3 - 0.3),
     [0.0003, 0.0006],
@@ -527,7 +528,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     phase: number;
   }
   const debris: THREE.Mesh[] = [];
-  for (let i = 0; i < 250; i++) {
+  for (let i = 0; i < 60; i++) {
     const geo = debrisGeos[Math.floor(Math.random() * debrisGeos.length)];
     const mat = new THREE.MeshBasicMaterial({
       color: Math.random() > 0.7 ? C_BRIGHT : C_MID,
@@ -681,6 +682,30 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     );
     offsetScratch.setLength(dist);
     camera.position.copy(controls.target).add(offsetScratch);
+  }
+
+  function panBy(dx: number, dy: number) {
+    const dist = camera.position.distanceTo(controls.target);
+    const panFactor = dist * 2; // Tune this to adjust pan speed
+    
+    // dx is right/left, dy is up/down
+    // Note: dy might need to be inverted depending on coordinate system
+    const panX = dx * panFactor;
+    const panY = -dy * panFactor; 
+
+    const vecX = new THREE.Vector3();
+    const vecY = new THREE.Vector3();
+    vecX.setFromMatrixColumn(camera.matrix, 0); // camera local X axis
+    vecY.setFromMatrixColumn(camera.matrix, 1); // camera local Y axis
+    
+    vecX.multiplyScalar(panX);
+    vecY.multiplyScalar(panY);
+
+    const panVector = vecX.add(vecY);
+
+    camera.position.add(panVector);
+    controls.target.add(panVector);
+    controls.update();
   }
 
   function resetView() {
@@ -853,6 +878,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     zoomIn: () => zoomBy(0.65),
     zoomOut: () => zoomBy(1.55),
     resetView,
+    panBy,
     dispose,
   };
 }

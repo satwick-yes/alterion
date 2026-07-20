@@ -18,25 +18,17 @@ def _get_api_key() -> str:
         return json.load(f)["gemini_api_key"]
 
 
-def _gemini_search(query: str) -> str:
-    from google import genai
-
-    client   = genai.Client(api_key=_get_api_key())
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=query,
-        config={"tools": [{"google_search": {}}]},
-    )
-
-    text = ""
-    for part in response.candidates[0].content.parts:
-        if hasattr(part, "text") and part.text:
-            text += part.text
-
-    text = text.strip()
-    if not text:
-        raise ValueError("Gemini returned an empty response.")
-    return text
+def _inference_search(query: str) -> str:
+    try:
+        from core.inference_wrapper import InferenceWrapper
+        wrapper = InferenceWrapper()
+        return wrapper.generate_text(
+            prompt=query,
+            system_instruction="You are a web search comparison assistant. Be factual.",
+            provider="openrouter"
+        )
+    except Exception as e:
+        raise ValueError(f"Inference search failed: {e}")
 
 
 def _ddg_search(query: str, max_results: int = 6) -> list[dict]:
@@ -74,7 +66,7 @@ def _compare(items: list[str], aspect: str) -> str:
         "Give specific facts and data."
     )
     try:
-        return _gemini_search(query)
+        return _inference_search(query)
     except Exception as e:
         print(f"[WebSearch] ⚠️ Gemini compare failed: {e} — falling back to DDG")
 

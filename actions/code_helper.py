@@ -36,27 +36,29 @@ def _get_api_key() -> str:
         return json.load(f)["gemini_api_key"]
 
 
-class GemmaModel:
-    def __init__(self, model_name: str):
-        self.model_name = model_name
-        
-    def generate_content(self, prompt: str):
-        class Response:
-            def __init__(self, text: str):
-                self.text = text
-        try:
-            from or_client import client
-            res = client.chat(prompt, model=self.model_name)
-            return Response(res)
-        except Exception as e:
-            print(f"[Code] ⚠️ Gemma failed, falling back to Gemini: {e}")
-            import google.generativeai as genai
-            genai.configure(api_key=_get_api_key())
-            m = genai.GenerativeModel("gemini-2.5-flash")
-            return m.generate_content(prompt)
-
-def _get_gemini(model: str = GEMINI_MODEL):
-    return GemmaModel("google/gemma-4-31b-it:free")
+def _get_model():
+    class AIModel:
+        def generate_content(self, prompt: str):
+            class Response:
+                def __init__(self, text: str):
+                    self.text = text
+            try:
+                import sys
+                from pathlib import Path
+                base = Path(__file__).resolve().parent.parent
+                if str(base) not in sys.path:
+                    sys.path.append(str(base))
+                from core.inference_wrapper import InferenceWrapper
+                wrapper = InferenceWrapper()
+                res = wrapper.generate_text(prompt=prompt, provider="openai")
+                return Response(res)
+            except Exception as e:
+                print(f"[Code] ⚠️ OpenAI failed, falling back to Gemini: {e}")
+                from core.inference_wrapper import InferenceWrapper
+                wrapper = InferenceWrapper()
+                res = wrapper.generate_text(prompt=prompt, provider="gemini")
+                return Response(res)
+    return AIModel()
 
 
 def _clean_code(text: str) -> str:
@@ -177,7 +179,7 @@ def _detect_intent(description: str, file_path: str, code: str) -> str:
 
 def _write(description: str, language: str, output_path: str, player=None) -> tuple[str, Path]:
     lang  = language or "python"
-    model = _get_gemini()
+    model = _get_model()
 
     prompt = f"""You are an expert {lang} developer.
 Write clean, working, well-commented {lang} code for the description below.
@@ -200,7 +202,7 @@ Code:"""
 
 
 def _fix_code(code: str, error_output: str, description: str) -> str:
-    model  = _get_gemini()
+    model  = _get_model()
     prompt = f"""You are an expert debugger.
 The code below failed with the following error. Fix it.
 Return ONLY the corrected code — no explanation, no markdown, no backticks.

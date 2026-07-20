@@ -33,6 +33,12 @@ def setup_api_keys():
     openrouter_key = input("Enter your new OpenRouter API Key (leave blank to keep current): ").strip()
     if openrouter_key:
         keys["openrouter_api_key"] = openrouter_key
+
+    # Prompt for OpenAI API Key
+    print(f"\nCurrent OpenAI API Key: {keys.get('openai_api_key', 'Not set')}")
+    openai_key = input("Enter your new OpenAI API Key (leave blank to keep current): ").strip()
+    if openai_key:
+        keys["openai_api_key"] = openai_key
         
     # Keep placeholders for others if they don't exist
     if "nvidia_api_key" not in keys:

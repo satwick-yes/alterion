@@ -23,7 +23,8 @@ class IntegrationGateway:
             "System & Control": [
                 "open_app", "close_app", "computer_settings", 
                 "computer_control", "desktop_control", "system_shell", 
-                "advanced_computer_use", "mobile_control"
+                "advanced_computer_use", "mobile_control", 
+                "cmd_control", "game_updater", "browser_control", "screen_process"
             ],
             "Research & Intelligence": [
                 "web_search", "weather_report", "flight_finder", 

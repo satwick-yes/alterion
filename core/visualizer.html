@@ -220,7 +220,14 @@
     </div>
   </div>
 
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
   <script>
+    // QWebChannel setup
+    let gestureController = null;
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+        gestureController = channel.objects.gesture_controller;
+    });
+
     // Color schemes mapped to states
     const STATES = {
       STANDBY:   { main: 0xffaa30, mid: 0xdd7700, dim: 0x884400, glow: 0xffaa30, pulse: 1.0 },
@@ -487,6 +494,21 @@
       camera.position.copy(controls.target).add(offset);
     }
 
+    function panBy(dx, dy) {
+      const dist = camera.position.distanceTo(controls.target);
+      const panFactor = dist * 2;
+      const vecX = new THREE.Vector3();
+      const vecY = new THREE.Vector3();
+      vecX.setFromMatrixColumn(camera.matrix, 0);
+      vecY.setFromMatrixColumn(camera.matrix, 1);
+      vecX.multiplyScalar(dx * panFactor);
+      vecY.multiplyScalar(-dy * panFactor);
+      const panVector = vecX.add(vecY);
+      camera.position.add(panVector);
+      controls.target.add(panVector);
+      controls.update();
+    }
+
     // ——— EXTERNAL COMMUNICATION API ———
     window.setJarvisState = function(state, level = 0) {
       state = state.toUpperCase();
@@ -591,7 +613,7 @@
 
     // Gesture status update
     function setGestureStatus(hands, mode) {
-      const modeLabels = { idle: "STANDBY", spin: "ROTATE", zoom: "ZOOM" };
+      const modeLabels = { idle: "STANDBY", spin: "ROTATE", zoom: "ZOOM", pan: "PAN", reset: "RESET" };
       const statusEl = document.getElementById("camera-status");
       if (hands > 0) {
         statusEl.innerText = `${hands} HAND${hands > 1 ? "S" : ""} · ${modeLabels[mode] || "ACTIVE"}`;
@@ -609,6 +631,7 @@
         this.prevMode = "idle";
         this.prevSpinGrab = null;
         this.prevZoomDist = null;
+        this.prevPanGrab = null;
         this.handStates = new Map();
       }
 
@@ -637,10 +660,35 @@
       }
 
       async start() {
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: "user" },
+        let stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 },
           audio: false
         });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === "videoinput");
+        
+        const isVirtual = (label) => 
+          ["droidcam", "epoccam", "iriun", "camo", "obs", "virtual"].some(k => 
+            label.toLowerCase().includes(k)
+          );
+
+        let preferredDevice = videoDevices.find(d => 
+          !isVirtual(d.label) && ["integrated", "built-in", "webcam"].some(k => d.label.toLowerCase().includes(k))
+        );
+        if (!preferredDevice) {
+          preferredDevice = videoDevices.find(d => !isVirtual(d.label));
+        }
+
+        if (preferredDevice) {
+          stream.getTracks().forEach(t => t.stop());
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: preferredDevice.deviceId }, width: 640, height: 480 },
+            audio: false
+          });
+        }
+
+        this.stream = stream;
         video.srcObject = this.stream;
         await video.play();
 
@@ -677,6 +725,7 @@
 
       processHands(landmarks, labels) {
         const pinchedGrabs = [];
+        const openGrabs = [];
         const seen = new Set();
 
         landmarks.forEach((lm, i) => {
@@ -697,8 +746,70 @@
 
           let state = this.handStates.get(label);
           if (!state) {
-            state = { pinching: false, grab: raw };
+            state = { 
+              pinching: false, 
+              grab: raw,
+              leftClicking: false,
+              rightClicking: false,
+              history: [],
+              swipedRecently: 0
+            };
             this.handStates.set(label, state);
+          }
+
+          // System Control Integration
+          if (gestureController) {
+            // Mouse Movement (Index Tip)
+            gestureController.mouseMove(1 - lm[8].x, lm[8].y);
+
+            // Clicks
+            const middlePinch = Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y) / handScale;
+            if (pinchRatio < 0.25) {
+              if (!state.leftClicking) {
+                state.leftClicking = true;
+                gestureController.mouseDown();
+              }
+            } else {
+              if (state.leftClicking) {
+                state.leftClicking = false;
+                gestureController.mouseUp();
+              }
+            }
+
+            if (middlePinch < 0.25) {
+              if (!state.rightClicking) {
+                state.rightClicking = true;
+                gestureController.mouseClickRight();
+              }
+            } else {
+              state.rightClicking = false;
+            }
+
+            // Swipes
+            const now = performance.now();
+            state.history.push({x: 1 - lm[0].x, y: lm[0].y, time: now});
+            if (state.history.length > 15) state.history.shift();
+
+            if (state.history.length === 15 && (!state.swipedRecently || now - state.swipedRecently > 1000)) {
+              const start = state.history[0];
+              const end = state.history[14];
+              const dt = end.time - start.time;
+              const dx = end.x - start.x;
+              const dy = end.y - start.y;
+
+              if (dt > 0 && dt < 500) {
+                const vx = dx / dt;
+                const vy = dy / dt;
+                const speedThresh = 0.0025;
+                if (Math.abs(vx) > speedThresh && Math.abs(vx) > Math.abs(vy)) {
+                  gestureController.swipe(vx > 0 ? "right" : "left");
+                  state.swipedRecently = now;
+                } else if (Math.abs(vy) > speedThresh && Math.abs(vy) > Math.abs(vx)) {
+                  gestureController.swipe(vy > 0 ? "down" : "up");
+                  state.swipedRecently = now;
+                }
+              }
+            }
           }
 
           if (state.pinching && pinchRatio > 0.45) state.pinching = false;
@@ -708,18 +819,25 @@
           state.grab.y = state.grab.y + (raw.y - state.grab.y) * 0.4;
 
           if (state.pinching) pinchedGrabs.push(state.grab);
+          else openGrabs.push(state.grab);
         });
 
         for (const key of this.handStates.keys()) {
           if (!seen.has(key)) this.handStates.delete(key);
         }
 
-        const mode = pinchedGrabs.length >= 2 ? "zoom" : pinchedGrabs.length === 1 ? "spin" : "idle";
+        const mode = pinchedGrabs.length >= 2 ? "zoom" : pinchedGrabs.length === 1 ? "spin" : openGrabs.length >= 2 ? "reset" : openGrabs.length === 1 ? "pan" : "idle";
 
         if (mode !== this.prevMode) {
           this.prevSpinGrab = null;
           this.prevZoomDist = null;
+          this.prevPanGrab = null;
           this.prevMode = mode;
+          if (mode === "reset") {
+            camera.position.set(0, 0.5, 5.5);
+            controls.target.set(0, 0, 0);
+            controls.update();
+          }
         }
 
         if (mode === "spin") {
@@ -737,6 +855,14 @@
             zoomBy(factor);
           }
           this.prevZoomDist = d;
+        } else if (mode === "pan") {
+          const grab = openGrabs[0];
+          if (this.prevPanGrab) {
+            const dx = grab.x - this.prevPanGrab.x;
+            const dy = grab.y - this.prevPanGrab.y;
+            panBy(dx, dy);
+          }
+          this.prevPanGrab = grab;
         }
 
         setGestureStatus(landmarks.length, mode);

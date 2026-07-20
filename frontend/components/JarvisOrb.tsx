@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+
+// Fallback declaration for JSX elements in case @types/react is not resolved
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
 import { createOrbScene, type OrbSceneApi } from "@/lib/orbScene";
 import { HandTracker, type TrackerStatus } from "@/lib/handTracker";
 
@@ -10,6 +19,8 @@ const MODE_LABEL: Record<TrackerStatus["mode"], string> = {
   idle: "STANDBY",
   spin: "SPIN",
   zoom: "ZOOM",
+  pan: "PAN",
+  reset: "RESET",
 };
 
 export default function JarvisOrb() {
@@ -54,6 +65,8 @@ export default function JarvisOrb() {
     const tracker = new HandTracker(video, overlay, {
       onRotate: (dt, dp) => sceneRef.current?.rotateBy(dt, dp),
       onZoom: (factor) => sceneRef.current?.zoomBy(factor),
+      onPan: (dx, dy) => sceneRef.current?.panBy(dx, dy),
+      onReset: () => sceneRef.current?.resetView(),
       onStatus: setStatus,
     });
     trackerRef.current = tracker;
@@ -140,8 +153,8 @@ export default function JarvisOrb() {
           <video ref={videoRef} muted playsInline className="camera-video" />
           <canvas ref={overlayRef} width={208} height={156} className="camera-overlay" />
           <div className="camera-status">
-            {status.hands > 0
-              ? `${status.hands} HAND${status.hands > 1 ? "S" : ""} · ${MODE_LABEL[status.mode]}`
+            {(status as TrackerStatus).hands > 0
+              ? `${(status as TrackerStatus).hands} HAND${(status as TrackerStatus).hands > 1 ? "S" : ""} · ${MODE_LABEL[(status as TrackerStatus).mode]}`
               : "SHOW HANDS"}
           </div>
         </div>

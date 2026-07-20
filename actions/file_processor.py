@@ -380,6 +380,12 @@ def _process_data(path: Path, file_type: str, action: str,
             elif condition == "contains": filtered = df[df[col].astype(str).str.contains(str(value), case=False)]
             elif condition == "gt":       filtered = df[df[col] > float(value)]
             elif condition == "lt":       filtered = df[df[col] < float(value)]
+            elif condition == "date_before":
+                filtered = df[pd.to_datetime(df[col], errors='coerce') < pd.to_datetime(value)]
+            elif condition == "date_after":
+                filtered = df[pd.to_datetime(df[col], errors='coerce') > pd.to_datetime(value)]
+            elif condition == "date_equals":
+                filtered = df[pd.to_datetime(df[col], errors='coerce') == pd.to_datetime(value)]
             else:                         filtered = df[df[col] == value]
             out = _output_path(path, "filtered", ".csv")
             filtered.to_csv(out, index=False)

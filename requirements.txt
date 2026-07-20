@@ -10,7 +10,7 @@ pyautogui
 pyperclip
 pygetwindow       
 opencv-python
-numpy
+numpy<2.0.0
 mss
 Pillow
 psutil
@@ -29,3 +29,7 @@ python-pptx
 pydub
 reportlab
 openai
+torch==2.0.1
+torchaudio==2.0.2
+speechbrain==0.5.16
+huggingface-hub<0.22.0

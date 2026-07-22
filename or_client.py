@@ -34,15 +34,15 @@ def _load_api_key() -> str:
         raise RuntimeError(f"Failed to load OpenRouter API key: {e}")
 
 TEXT_MODELS: list[str] = [
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-3.2-3b-instruct:free",
-    "qwen/qwen-2.5-7b-instruct:free",
-    "microsoft/phi-3-mini-128k-instruct:free"
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
+    "poolside/laguna-s-2.1:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free"
 ]
 
 VISION_MODELS: list[str] = [
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-3.2-11b-vision-instruct:free"
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "google/gemma-4-31b-it:free"
 ]
 
 API_URL               = "https://openrouter.ai/api/v1/chat/completions"

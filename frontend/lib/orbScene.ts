@@ -335,7 +335,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
   const innerCore = new THREE.Group();
   const R3 = 0.9;
 
-  // Dense spirals
+  // Dense spirals (thickened)
   for (let s = 0; s < 8; s++) {
     const pts: THREE.Vector3[] = [];
     const turns = 3 + Math.random() * 2;
@@ -353,24 +353,46 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
         ),
       );
     }
-    innerCore.add(
-      new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(pts),
-        lineMat(C_BRIGHT, 0.3 + Math.random() * 0.2),
-      ),
-    );
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo = new THREE.TubeGeometry(curve, 300, 0.012, 4, false);
+    const mat = new THREE.MeshBasicMaterial({ color: C_BRIGHT, transparent: true, opacity: 0.4 + Math.random() * 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+    innerCore.add(new THREE.Mesh(geo, mat));
   }
 
-  // Inner latitude rings
+  // Inner latitude rings (thickened)
   for (let i = -6; i <= 6; i++) {
     const lat = (i / 6) * (Math.PI / 2) * 0.9;
-    innerCore.add(new THREE.Line(latRing(R3, lat, 80), lineMat(C_DIM, 0.2)));
+    const r = R3 * Math.cos(lat);
+    const y = R3 * Math.sin(lat);
+    const pts: THREE.Vector3[] = [];
+    for (let j = 0; j < 80; j++) {
+      const a = (j / 80) * Math.PI * 2;
+      pts.push(new THREE.Vector3(r * Math.cos(a), y, r * Math.sin(a)));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts, true);
+    const geo = new THREE.TubeGeometry(curve, 80, 0.005, 3, true);
+    const mat = new THREE.MeshBasicMaterial({ color: C_DIM, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+    innerCore.add(new THREE.Mesh(geo, mat));
   }
 
-  // Inner meridians
+  // Inner meridians (thickened)
   for (let i = 0; i < 12; i++) {
     const lon = (i / 12) * Math.PI * 2;
-    innerCore.add(new THREE.Line(meridian(R3, lon, 80), lineMat(C_DIM, 0.15)));
+    const pts: THREE.Vector3[] = [];
+    for (let j = 0; j <= 80; j++) {
+      const lat = (j / 80) * Math.PI - Math.PI / 2;
+      pts.push(
+        new THREE.Vector3(
+          R3 * Math.cos(lat) * Math.cos(lon),
+          R3 * Math.sin(lat),
+          R3 * Math.cos(lat) * Math.sin(lon),
+        ),
+      );
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo = new THREE.TubeGeometry(curve, 80, 0.004, 3, false);
+    const mat = new THREE.MeshBasicMaterial({ color: C_DIM, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false });
+    innerCore.add(new THREE.Mesh(geo, mat));
   }
 
   orbGroup.add(innerCore);
@@ -482,31 +504,13 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
   }
 
   // On outer sphere — dense text coverage
-  const textOuter = scatterText(
-    120, // Reduced from 1200 for performance
-    () => 0.04 + Math.random() * 0.04,
-    () => R1 + 0.03 + Math.random() * 0.08,
-    [0.0002, 0.0008],
-  );
-  orbGroup.add(textOuter);
+  const textOuter = new THREE.Group();
 
   // On inner core — more text
-  const textInner = scatterText(
-    30, // Reduced from 100
-    () => 0.03 + Math.random() * 0.03,
-    () => R3 + 0.02,
-    [0.0005, 0.001],
-  );
-  orbGroup.add(textInner);
+  const textInner = new THREE.Group();
 
   // Floating ambient text between shells
-  const textAmbient = scatterText(
-    50, // Reduced from 400
-    () => 0.03,
-    () => R3 + 0.2 + Math.random() * (R1 - R3 - 0.3),
-    [0.0003, 0.0006],
-  );
-  orbGroup.add(textAmbient);
+  const textAmbient = new THREE.Group();
 
   // ═══════════════════════════════════════════════
   // ORBITING DEBRIS / ROCKS
@@ -543,8 +547,8 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     const tiltZ = (Math.random() - 0.5) * Math.PI * 0.5;
     const phase = Math.random() * Math.PI * 2;
     mesh.userData = { orbitR, speed, tiltX, tiltZ, phase } satisfies DebrisOrbit;
-    debris.push(mesh);
-    orbGroup.add(mesh);
+    // debris.push(mesh);
+    // orbGroup.add(mesh);
 
     // ~15% get a faint trailing line
     if (Math.random() > 0.85) {
@@ -609,7 +613,7 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     color: C_BRIGHT,
   });
   const dustPoints = new THREE.Points(dustGeo, dustMat);
-  orbGroup.add(dustPoints);
+  // orbGroup.add(dustPoints);
 
   // ═══════════════════════════════════════════════
   // SCANNING RINGS
@@ -629,8 +633,8 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     return mesh;
   }
 
-  const scanRing1 = makeScanRing(R1, 0.01);
-  const scanRing2 = makeScanRing(R1 * 0.7, 0.008);
+  const scanRing1 = makeScanRing(R1, 0.035);
+  const scanRing2 = makeScanRing(R1 * 0.7, 0.025);
   orbGroup.add(scanRing1, scanRing2);
 
   // ═══════════════════════════════════════════════
@@ -740,10 +744,12 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
     shell2.rotation.y -= 0.001;
     shell2.rotation.z = Math.sin(t * 0.12) * 0.03;
 
-    // Inner core — opposite, faster
-    innerCore.rotation.y -= 0.005;
-    innerCore.rotation.z += 0.002;
-    innerCore.rotation.x = Math.cos(t * 0.1) * 0.08;
+    // Inner core — slower but more animated (pulsing and dynamic rotation)
+    innerCore.rotation.y -= 0.0015;
+    innerCore.rotation.z += 0.0008;
+    innerCore.rotation.x = Math.cos(t * 0.3) * 0.2;
+    // Add an animated scale pulse
+    innerCore.scale.setScalar(1 + Math.sin(t * 2.0) * 0.03 + Math.cos(t * 0.8) * 0.05);
 
     // Innermost wireframe
     icoWire.rotation.x += 0.008;
@@ -800,18 +806,18 @@ export function createOrbScene(container: HTMLElement): OrbSceneApi {
       });
     }
 
-    // Scan rings sweeping
-    const scanY1 = Math.sin(t * 0.4) * R1;
+    // Scan rings sweeping (slower)
+    const scanY1 = Math.sin(t * 0.15) * R1;
     scanRing1.position.y = scanY1;
     const scanS1 = Math.sqrt(Math.max(0, R1 * R1 - scanY1 * scanY1)) / R1;
     scanRing1.scale.set(scanS1, scanS1, 1);
-    (scanRing1.material as THREE.MeshBasicMaterial).opacity = 0.2 * scanS1;
+    (scanRing1.material as THREE.MeshBasicMaterial).opacity = 0.4 * scanS1;
 
-    const scanY2 = Math.sin(t * 0.6 + 2) * R3;
+    const scanY2 = Math.sin(t * 0.25 + 2) * R3;
     scanRing2.position.y = scanY2;
     const scanS2 = Math.sqrt(Math.max(0, R3 * R3 - scanY2 * scanY2)) / R3;
     scanRing2.scale.set(scanS2, scanS2, 1);
-    (scanRing2.material as THREE.MeshBasicMaterial).opacity = 0.15 * scanS2;
+    (scanRing2.material as THREE.MeshBasicMaterial).opacity = 0.3 * scanS2;
 
     // Dust rotation
     dustPoints.rotation.y += 0.0002;

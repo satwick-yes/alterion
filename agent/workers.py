@@ -73,7 +73,14 @@ class WorkerManager:
             threading.Thread(target=run_mobile, daemon=True).start()
             return "Autonomous mobile agent started."
         elif "open" in task or "launch" in task:
-            app_name = task.replace("open ", "").replace("launch ", "")
+            import re
+            m = re.search(r'(?i)(?:open|launch)\s+(.*?)\s+(?:and navigate to|and go to|and open|and visit|to|at)\s+(https?://[^\s]+|[\w.-]+\.[a-z]{2,})', task)
+            if m:
+                app_name = m.group(1).strip()
+                url = m.group(2).strip()
+                return open_app(parameters={"app_name": app_name, "url": url}, response=None, player=player)
+            
+            app_name = task.replace("open ", "").replace("launch ", "").replace("Open ", "").replace("Launch ", "")
             return open_app(parameters={"app_name": app_name}, response=None, player=player)
         elif "screen" in task and ("look" in task or "see" in task):
             threading.Thread(
@@ -114,7 +121,15 @@ class WorkerManager:
     @staticmethod
     def _run_creator(task, args, player, speak, async_callback=None):
         if "message" in task or "whatsapp" in task or "telegram" in task:
-            return send_message(parameters={"receiver": task, "message_text": task, "platform": "WhatsApp"}, response=None, player=player, session_memory=None)
+            import re
+            m = re.search(r'(?:send a message to|send message to|text|message|tell)\s+([\w\s]+?)\s+(?:saying that|saying|that|to)\s+(.*)', task.lower())
+            if m:
+                receiver = m.group(1).strip()
+                message_text = m.group(2).strip()
+            else:
+                receiver = task
+                message_text = task
+            return send_message(parameters={"receiver": receiver, "message_text": message_text, "platform": "WhatsApp"}, response=None, player=player, session_memory=None)
         elif "presentation" in task or "powerpoint" in task:
             return WorkerManager._run_in_background(create_presentation, {"parameters": {"topic": task, "slides": []}, "player": player}, async_callback, "Creator-PPT")
         elif "report" in task or "pdf" in task:

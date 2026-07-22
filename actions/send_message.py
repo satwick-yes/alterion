@@ -228,6 +228,13 @@ def send_message(
     params       = parameters or {}
     receiver     = params.get("receiver", "").strip()
     message_text = params.get("message_text", "").strip()
+    
+    import re
+    # Clean up quotes and common LLM phrasing mistakes
+    receiver = receiver.strip(' "\'')
+    message_text = message_text.strip(' "\'')
+    receiver = re.sub(r'(?i)\s+(on|via)\s+(whatsapp|telegram|instagram|discord|messenger|skype|signal).*$', '', receiver).strip()
+    receiver = re.sub(r'(?i)^(to|for|message|contact)\s+', '', receiver).strip()
     platform     = params.get("platform", "whatsapp").strip().lower()
 
     browser_param = params.get("browser", "").lower().strip()

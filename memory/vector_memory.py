@@ -48,27 +48,34 @@ class VectorMemoryDB:
         if not text or len(text.strip()) < 5:
             return
         
-        try:
-            # Check if this exact text is already stored
-            for item in self.db:
-                if item.get("text") == text:
-                    return
-            
-            logger.info(f"[VectorMemory] Embedding text: '{text[:40]}...'")
-            embedding = inference_client.generate_embedding(text)
-            
-            new_item = {
-                "text": text,
-                "category": category,
-                "embedding": embedding,
-                "timestamp": time.time()
-            }
-            
-            self.db.append(new_item)
-            self._save_db()
-            logger.info(f"[VectorMemory] Saved memory item to vector store.")
-        except Exception as e:
-            logger.error(f"[VectorMemory] Add memory failed: {e}")
+        def _bg_add():
+            try:
+                # Check if this exact text is already stored
+                with _lock:
+                    for item in self.db:
+                        if item.get("text") == text:
+                            return
+                
+                logger.info(f"[VectorMemory] Embedding text: '{text[:40]}...'")
+                # Chunking large texts before embedding
+                chunk = text[:2000] # simple length chunking for safety
+                embedding = inference_client.generate_embedding(chunk)
+                
+                new_item = {
+                    "text": chunk,
+                    "category": category,
+                    "embedding": embedding,
+                    "timestamp": time.time()
+                }
+                
+                with _lock:
+                    self.db.append(new_item)
+                self._save_db()
+                logger.info(f"[VectorMemory] Saved memory item to vector store.")
+            except Exception as e:
+                logger.error(f"[VectorMemory] Add memory failed: {e}")
+                
+        threading.Thread(target=_bg_add, daemon=True).start()
 
     def search_memories(self, query: str, limit: int = 3) -> List[Dict[str, Any]]:
         if not query or not self.db:

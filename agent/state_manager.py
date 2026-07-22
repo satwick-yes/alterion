@@ -35,6 +35,7 @@ class StateManager:
         self.current_task_id = None
         self.tasks = {}
         self.active_workers = {}
+        self.on_state_change = None
         self._load_state_log()
 
     def _load_state_log(self):
@@ -59,6 +60,11 @@ class StateManager:
         with self._lock:
             self.agent_state = state
             print(f"[StateManager] Agent state changed to: {state.value.upper()}")
+            if self.on_state_change:
+                try:
+                    self.on_state_change(state.value.upper())
+                except Exception:
+                    pass
 
     def get_agent_state(self) -> AgentState:
         with self._lock:

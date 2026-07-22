@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 try:
-    from PIL import ImageGrab
+    from PIL import Image, ImageGrab
 except ImportError:
     pass
 
@@ -53,67 +53,52 @@ def _parse_intent(goal: str) -> dict:
         return {"app": "Windows", "action": goal}
 
 
-def _take_screenshot() -> tuple[str, int, int]:
-    """Take a screenshot and return (base64_jpeg, width, height)."""
+def _take_screenshot() -> tuple[str, int, int, float, float]:
+    """Take a screenshot, scale it down for speed, and return (base64_jpeg, scaled_w, scaled_h, scale_x, scale_y)."""
     screenshot = ImageGrab.grab()
-    width, height = screenshot.size
+    orig_w, orig_h = screenshot.size
+    
+    max_w = 1024
+    scale = min(1.0, max_w / orig_w)
+    
+    if scale < 1.0:
+        new_w, new_h = int(orig_w * scale), int(orig_h * scale)
+        screenshot = screenshot.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    else:
+        new_w, new_h = orig_w, orig_h
+        
     buf = io.BytesIO()
-    screenshot.save(buf, format='JPEG', quality=85)
+    screenshot.save(buf, format='JPEG', quality=60)
     b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-    return b64, width, height
+    
+    scale_x = orig_w / new_w if new_w else 1.0
+    scale_y = orig_h / new_h if new_h else 1.0
+    return b64, new_w, new_h, scale_x, scale_y
 
 
-def _extract_coords_from_text(text: str) -> Optional[tuple[int, int]]:
-    """Robustly extract x,y coordinates from AI response text."""
-    # Strip markdown
-    text = re.sub(r"```(?:json)?", "", text).strip().rstrip("`").strip()
-    
-    # Try JSON parse first
-    try:
-        data = json.loads(text)
-        if isinstance(data, dict):
-            if "x" in data and "y" in data:
-                return (int(data["x"]), int(data["y"]))
-            if "error" in data:
-                return None
-    except Exception:
-        pass
-    
-    # Regex fallback: find first "x": 123, "y": 456 pattern
-    m = re.search(r'"?x"?\s*[=:]\s*(\d+).*?"?y"?\s*[=:]\s*(\d+)', text, re.IGNORECASE | re.DOTALL)
+def _extract_id_from_text(text: str) -> Optional[str]:
+    """Robustly extract the integer ID from AI response text."""
+    # Look for a standalone number
+    m = re.search(r'\b(\d{1,3})\b', text)
     if m:
-        return (int(m.group(1)), int(m.group(2)))
-    
-    # Regex fallback: find "123, 456" pattern
-    m = re.search(r'\b(\d{2,4})\s*,\s*(\d{2,4})\b', text)
-    if m:
-        return (int(m.group(1)), int(m.group(2)))
-    
+        return m.group(1)
     return None
 
 
-def _find_button_with_gemini(goal: str, b64_image: str, width: int, height: int) -> Optional[tuple[int, int]]:
-    """Use Gemini Vision (primary) to find coordinates."""
+def _find_button_with_gemini(prompt: str, b64_image: str) -> Optional[str]:
+    """Use Gemini Vision to find the element ID."""
     keys = _load_keys()
     gemini_key = keys.get("gemini_api_key", "").strip()
     if not gemini_key:
         return None
     
-    prompt = (
-        f'The user wants to: "{goal}". '
-        f"The screenshot is {width}x{height} pixels. "
-        "Find the exact UI button, toggle, or icon that needs to be clicked. "
-        'Return ONLY a JSON object like {"x": 123, "y": 456} with the center pixel coordinates. '
-        'If the element is not visible, return {"error": "not found"}.'
-    )
-    
-    print("[VisionComputerUse] Asking Gemini Vision for coordinates...")
+    print("[VisionComputerUse] Asking Gemini Vision for ID...")
     try:
         from google import genai
         from google.genai import types
         client = genai.Client(api_key=gemini_key)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=[
                 types.Part.from_bytes(
                     data=base64.b64decode(b64_image),
@@ -121,29 +106,19 @@ def _find_button_with_gemini(goal: str, b64_image: str, width: int, height: int)
                 ),
                 types.Part.from_text(text=prompt)
             ],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                max_output_tokens=256
-            )
+            config=types.GenerateContentConfig(max_output_tokens=32)
         )
-        return _extract_coords_from_text(response.text.strip())
+        return _extract_id_from_text(response.text.strip())
     except Exception as e:
         print(f"[VisionComputerUse] Gemini Vision failed: {e}")
         return None
 
 
-def _find_button_with_openrouter(goal: str, b64_image: str, width: int, height: int) -> Optional[tuple[int, int]]:
-    """Use OpenRouter vision models (fallback) to find coordinates."""
-    prompt = (
-        f'The user wants to: "{goal}". '
-        f"The screenshot is {width}x{height} pixels. "
-        "Find the exact UI button, toggle, or icon that needs to be clicked. "
-        'Return ONLY a JSON object like {"x": 123, "y": 456} with the center pixel coordinates. '
-        'If not visible, return {"error": "not found"}.'
-    )
-    system = 'Return ONLY a valid JSON object {"x": number, "y": number}. No other text.'
+def _find_button_with_openrouter(prompt: str, b64_image: str) -> Optional[str]:
+    """Use OpenRouter vision models (fallback) to find the ID."""
+    system = "Respond ONLY with the integer ID number. No other text."
     
-    print("[VisionComputerUse] Asking OpenRouter Vision for coordinates...")
+    print("[VisionComputerUse] Asking OpenRouter Vision for ID...")
     try:
         sys.path.insert(0, str(BASE_DIR))
         from or_client import OpenRouterClient
@@ -154,29 +129,154 @@ def _find_button_with_openrouter(goal: str, b64_image: str, width: int, height: 
             mime="image/jpeg",
             system=system
         )
-        return _extract_coords_from_text(text)
+        return _extract_id_from_text(text)
     except Exception as e:
         print(f"[VisionComputerUse] OpenRouter Vision failed: {e}")
         return None
 
 
-def _find_button_coordinates(goal: str) -> Optional[tuple[int, int]]:
-    """Take a screenshot and find button coordinates using Gemini then OpenRouter."""
-    print("[VisionComputerUse] Taking screenshot...")
+def _find_button_with_nvidia(prompt: str, b64_image: str) -> Optional[str]:
+    """Use Nvidia Vision (primary if requested) to find the ID."""
+    keys = _load_keys()
+    nvidia_key = keys.get("nvidia_api_key", "").strip()
+    if not nvidia_key:
+        return None
+        
+    print("[VisionComputerUse] Asking Nvidia Vision for ID...")
     try:
-        b64_image, width, height = _take_screenshot()
+        import openai
+        client = openai.OpenAI(api_key=nvidia_key, base_url="https://integrate.api.nvidia.com/v1")
+        response = client.chat.completions.create(
+            model="meta/llama-3.2-90b-vision-instruct",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}
+                    ]
+                }
+            ],
+            max_tokens=32,
+            temperature=0.0
+        )
+        return _extract_id_from_text(response.choices[0].message.content.strip())
+    except Exception as e:
+        print(f"[VisionComputerUse] Nvidia Vision failed: {e}")
+        return None
+
+def _find_button_coordinates(goal: str) -> Optional[tuple[int, int]]:
+    """Take a screenshot with numbered bounding boxes (SoM) and find the exact coordinates."""
+    print("[VisionComputerUse] Taking screenshot with UI marks...")
+    try:
+        from actions.vision_overlay import generate_marked_screenshot
+        b64_image, mark_dict, width, height = generate_marked_screenshot()
     except Exception as e:
         print(f"[VisionComputerUse] Screenshot failed: {e}")
         return None
+        
+    prompt = (
+        f'Look at this numbered screenshot. The user wants to: "{goal}". '
+        "What number box is placed over the target element? "
+        "Respond ONLY with the exact integer ID of the box."
+    )
     
-    # Try Gemini first (most reliable)
-    coords = _find_button_with_gemini(goal, b64_image, width, height)
-    if coords:
-        return coords
+    element_id = None
+    if not element_id: element_id = _find_button_with_gemini(prompt, b64_image)
+    if not element_id: element_id = _find_button_with_nvidia(prompt, b64_image)
+    if not element_id: element_id = _find_button_with_openrouter(prompt, b64_image)
     
-    # Fall back to OpenRouter
-    coords = _find_button_with_openrouter(goal, b64_image, width, height)
-    return coords
+    if element_id and element_id in mark_dict:
+        # mark_dict already contains original, native, unscaled pixel coordinates!
+        return mark_dict[element_id]
+        
+    print(f"[VisionComputerUse] Target ID '{element_id}' not found in map.")
+    return None
+
+def _find_button_coordinates_grid(goal: str) -> Optional[tuple[int, int]]:
+    """Take a screenshot with a 50x50 grid and find the exact coordinates."""
+    print("[VisionComputerUse] Taking screenshot with 50x50 grid...")
+    try:
+        from actions.vision_grid import generate_grid_screenshot
+        b64_image, scale, cell_size = generate_grid_screenshot(cell_size=50)
+    except Exception as e:
+        print(f"[VisionComputerUse] Grid screenshot failed: {e}")
+        return None
+        
+    prompt = (
+        f'Look at this screenshot with a grid overlay. The user wants to click on: "{goal}". '
+        "Look at the numbers on the top/bottom for the X coordinate (column), and left/right for the Y coordinate (row). "
+        "Find the grid cell containing the target element. "
+        "Respond ONLY with the exact X and Y coordinates separated by a comma (e.g., '12, 5')."
+    )
+    
+    import re
+    text = None
+    keys = _load_keys()
+    
+    # Try Gemini First
+    gemini_key = keys.get("gemini_api_key", "").strip()
+    if gemini_key:
+        print("[VisionComputerUse] Asking Gemini Vision for Grid Coordinates...")
+        try:
+            from google import genai
+            from google.genai import types
+            client = genai.Client(api_key=gemini_key)
+            response = client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=[
+                    types.Part.from_bytes(data=base64.b64decode(b64_image), mime_type="image/jpeg"),
+                    types.Part.from_text(text=prompt)
+                ],
+                config=types.GenerateContentConfig(max_output_tokens=32, temperature=0.0)
+            )
+            text = response.text.strip()
+        except Exception as e:
+            print(f"[VisionComputerUse] Gemini Grid vision failed: {e}")
+            
+    # Try Nvidia Fallback
+    nvidia_key = keys.get("nvidia_api_key", "").strip()
+    if not text and nvidia_key:
+        print("[VisionComputerUse] Asking Nvidia Vision for Grid Coordinates...")
+        try:
+            import openai
+            client = openai.OpenAI(api_key=nvidia_key, base_url="https://integrate.api.nvidia.com/v1")
+            response = client.chat.completions.create(
+                model="meta/llama-3.2-90b-vision-instruct",
+                messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}]}]
+            )
+            text = response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"[VisionComputerUse] Nvidia Grid vision failed: {e}")
+
+    # Try OpenRouter Fallback
+    if not text:
+        print("[VisionComputerUse] Asking OpenRouter Vision for Grid Coordinates...")
+        try:
+            sys.path.insert(0, str(BASE_DIR))
+            from or_client import OpenRouterClient
+            client = OpenRouterClient()
+            text = client.vision(prompt=prompt, image_b64=b64_image, mime="image/jpeg", system="Respond ONLY with X, Y coordinates.")
+        except Exception as e:
+            print(f"[VisionComputerUse] OpenRouter Grid vision failed: {e}")
+
+    if text:
+        m = re.search(r'(\d+)\s*,\s*(\d+)', text)
+        if m:
+            grid_x = int(m.group(1))
+            grid_y = int(m.group(2))
+            
+            pixel_x = int((grid_x * cell_size + (cell_size / 2)) / scale)
+            pixel_y = int((grid_y * cell_size + (cell_size / 2)) / scale)
+            
+            print(f"[VisionComputerUse] Target found at Grid ({grid_x}, {grid_y}) -> Screen ({pixel_x}, {pixel_y})")
+            return (pixel_x, pixel_y)
+        else:
+            print(f"[VisionComputerUse] Failed to parse grid coordinates from: {text}")
+            
+    return None
+
+
 
 
 def _search_shortcut(action: str, app: str) -> Optional[str]:
@@ -229,7 +329,7 @@ def advanced_computer_use(parameters: dict, player=None, speak: Optional[Callabl
         # Self-correction validation
         print("[VisionComputerUse] Validating action success...")
         time.sleep(1.5) # Wait for UI to update
-        b64_img, w, h = _take_screenshot()
+        b64_img, w, h, sx, sy = _take_screenshot()
         validation_query = f"I just clicked on ({x}, {y}) to achieve the goal: '{goal}'. Did it work? Answer 'yes' or 'no'."
         try:
             from actions.web_search import _gemini_search

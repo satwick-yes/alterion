@@ -158,6 +158,10 @@ class _BrowserThread:
         self._exe_path   = None
         self._channel    = None
         self._is_opera   = False
+        self._browser_override = None
+
+    def set_browser_override(self, override: str):
+        self._browser_override = override
 
     def start(self):
         if self._thread and self._thread.is_alive():
@@ -188,13 +192,23 @@ class _BrowserThread:
 
     async def _launch_browser_if_needed(self):
         """
-        Tarayıcıyı başlatır. Zaten açıksa hiçbir şey yapmaz.
-        Her zaman default tarayıcıyı kullanır, özel sekme açmaz.
+        Tarayıcıyı başlatır.
+        Varsayılan olarak OS default tarayıcıyı kullanır, ancak override varsa onu kullanır.
         """
         if self._browser and self._browser.is_connected():
-            return
+            # If an override was requested and the current browser doesn't match it, close it
+            if self._browser_override:
+                current_id = (self._exe_path or self._channel or self._engine_name or "").lower()
+                if self._browser_override not in current_id:
+                    await self._browser.close()
+                    self._browser = None
+                    self._context = None
+                    self._page = None
+            
+            if self._browser and self._browser.is_connected():
+                return
 
-        prog_id = _get_default_browser_id()
+        prog_id = self._browser_override if self._browser_override else _get_default_browser_id()
         self._engine_name, self._exe_path, self._channel, self._is_opera = _find_browser_executable(prog_id)
         engine = getattr(self._playwright, self._engine_name)
 
@@ -452,7 +466,25 @@ def browser_control(
     """
     _ensure_started()
 
-    action = (parameters or {}).get("action", "").lower().strip()
+    params = parameters or {}
+    browser_param = params.get("browser", "").lower().strip()
+    
+    if not browser_param and session_memory:
+        try:
+            mem_str = str(session_memory).lower()
+            if "default browser is brave" in mem_str or "browser: brave" in mem_str:
+                browser_param = "brave"
+            elif "default browser is chrome" in mem_str or "browser: chrome" in mem_str:
+                browser_param = "chrome"
+            elif "default browser is firefox" in mem_str or "browser: firefox" in mem_str:
+                browser_param = "firefox"
+        except:
+            pass
+
+    if browser_param:
+        _bt.set_browser_override(browser_param)
+
+    action = params.get("action", "").lower().strip()
     result = "Unknown action."
 
     try:

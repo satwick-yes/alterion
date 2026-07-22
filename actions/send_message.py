@@ -63,16 +63,17 @@ def _send_whatsapp(receiver: str, message: str) -> str:
         time.sleep(1.5)
 
         pyautogui.hotkey("ctrl", "f")
-        time.sleep(0.4)
+        time.sleep(0.5)
         pyautogui.hotkey("ctrl", "a")
+        pyautogui.press("backspace")
         pyautogui.write(receiver, interval=0.04)
-        time.sleep(1.0)
+        time.sleep(2.0)  # Wait longer for search results
 
         pyautogui.press("enter")
-        time.sleep(0.8)
+        time.sleep(1.5)  # Wait longer for chat to open and focus
 
         pyautogui.write(message, interval=0.03)
-        time.sleep(0.2)
+        time.sleep(0.5)
         pyautogui.press("enter")
 
         return f"Message sent to {receiver} via WhatsApp."
@@ -81,31 +82,73 @@ def _send_whatsapp(receiver: str, message: str) -> str:
         return f"WhatsApp error: {e}"
 
 
-def _send_instagram(receiver: str, message: str) -> str:
+def _send_instagram(receiver: str, message: str, browser_param: str = "") -> str:
     """
     Sends an Instagram DM via browser (instagram.com).
-    Steps: Open Chrome → Go to instagram.com/direct → Search contact → Send
+    Steps: Open Browser → Go to instagram.com/direct/new/ → Search contact → Send
     """
     try:
         import webbrowser
+        import os
+        
+        browser_obj = webbrowser
+        if browser_param == "brave":
+            paths = [
+                os.path.expandvars(r"%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                os.path.expandvars(r"%ProgramFiles(x86)%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                os.path.expandvars(r"%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe")
+            ]
+            for p in paths:
+                if os.path.exists(p):
+                    try:
+                        webbrowser.register('brave', None, webbrowser.BackgroundBrowser(p))
+                        browser_obj = webbrowser.get('brave')
+                    except Exception:
+                        pass
+                    break
+        elif browser_param == "chrome":
+            paths = [
+                os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe")
+            ]
+            for p in paths:
+                if os.path.exists(p):
+                    try:
+                        webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(p))
+                        browser_obj = webbrowser.get('chrome')
+                    except Exception:
+                        pass
+                    break
 
-        webbrowser.open("https://www.instagram.com/direct/new/")
+        browser_obj.open("https://www.instagram.com/direct/new/")
         time.sleep(3.5)
 
-        pyautogui.write(receiver, interval=0.05)
-        time.sleep(1.5)
+        is_top_chat = receiver.lower() in ["top chat", "recent chat", "first chat", "latest chat"]
+        
+        if not is_top_chat:
+            pyautogui.write(receiver, interval=0.05)
+            time.sleep(2.0)
 
-        pyautogui.press("down")
+        # Tab to the first user in the list (search result or top suggested)
+        pyautogui.press("tab")
         time.sleep(0.3)
-        pyautogui.press("enter")
+        pyautogui.press("space")
         time.sleep(0.5)
 
-        for _ in range(3):
-            pyautogui.press("tab")
-            time.sleep(0.1)
+        # Navigate backwards to the "Next"/"Chat" button in the header
+        # Shift+Tab 1: Back to Search Input
+        pyautogui.hotkey("shift", "tab")
+        time.sleep(0.3)
+        # Shift+Tab 2: Back to Next/Chat Button
+        pyautogui.hotkey("shift", "tab")
+        time.sleep(0.3)
+        
+        # Press enter to open the chat
         pyautogui.press("enter")
-        time.sleep(1.5)
+        time.sleep(2.5)
 
+        # Type and send the message
         pyautogui.write(message, interval=0.04)
         time.sleep(0.2)
         pyautogui.press("enter")
@@ -187,6 +230,19 @@ def send_message(
     message_text = params.get("message_text", "").strip()
     platform     = params.get("platform", "whatsapp").strip().lower()
 
+    browser_param = params.get("browser", "").lower().strip()
+    if not browser_param and session_memory:
+        try:
+            mem_str = str(session_memory).lower()
+            if "default browser is brave" in mem_str or "browser: brave" in mem_str:
+                browser_param = "brave"
+            elif "default browser is chrome" in mem_str or "browser: chrome" in mem_str:
+                browser_param = "chrome"
+            elif "default browser is firefox" in mem_str or "browser: firefox" in mem_str:
+                browser_param = "firefox"
+        except:
+            pass
+
     if not receiver:
         return "Please specify who to send the message to, sir."
     if not message_text:
@@ -200,7 +256,7 @@ def send_message(
         result = _send_whatsapp(receiver, message_text)
 
     elif "instagram" in platform or "ig" in platform or "insta" in platform:
-        result = _send_instagram(receiver, message_text)
+        result = _send_instagram(receiver, message_text, browser_param)
 
     elif "telegram" in platform or "tg" in platform:
         result = _send_telegram(receiver, message_text)

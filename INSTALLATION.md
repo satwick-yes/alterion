@@ -31,9 +31,6 @@ You have a few options for starting Jarvis, depending on your needs:
 
 - **Background Mode (Recommended)**: Double-click `launchers\start_jarvis.bat`. Jarvis will run silently in the background without keeping a console window open.
 - **Console Mode (For Debugging)**: Double-click `launchers\jarvis_console.bat`. This will open a visible command prompt so you can see the logs and actions as Jarvis performs them.
-- **Always-On Voice Listener**: Double-click `Start_Always_On_Listener.bat`. This runs the offline `vosk` voice model listener in a console window, waiting for you to say the wake word "Jarvis".
-
 ## Troubleshooting
 - If you encounter issues during `install_dependencies.bat`, ensure you have the latest `pip` installed by running `python -m pip install --upgrade pip` in your command prompt.
 - Make sure you are running the setup scripts from the main `jarvis ai` folder.
-- If voice activation is not working, ensure your microphone is properly connected and set as the default input device in Windows settings.

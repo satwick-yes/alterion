@@ -20,25 +20,26 @@ class IntegrationGateway:
         
         # Hardcoded list of default companion tool permissions to enforce security policies
         self.permissions = {
-            "System & Control": [
+            "Operator Agent": [
                 "open_app", "close_app", "computer_settings", 
                 "computer_control", "desktop_control", "system_shell", 
                 "advanced_computer_use", "mobile_control", 
-                "cmd_control", "game_updater", "browser_control", "screen_process"
+                "cmd_control", "game_updater", "browser_control", "screen_process", "agent_task", "send_message", "virtual_hand_control",
+                "delegate_to_operator"
             ],
-            "Research & Intelligence": [
+            "Research Agent": [
                 "web_search", "weather_report", "flight_finder", 
-                "youtube_video", "open_app", "computer_control", "advanced_computer_use"
+                "youtube_video", "free_api_query", "virtual_hand_control",
+                "delegate_to_researcher"
             ],
-            "Developer Core": [
-                "code_helper", "dev_agent", "system_shell", "open_app", "computer_control", "advanced_computer_use"
+            "Developer Agent": [
+                "code_helper", "dev_agent", "system_shell", "file_controller", "agent_task", "virtual_hand_control",
+                "delegate_to_developer"
             ],
-            "Office & Productivity": [
-                "file_controller", "file_processor", "create_presentation", 
-                "create_report", "reminder", "open_app", "computer_control", "advanced_computer_use"
-            ],
-            "Communication": [
-                "send_message"
+            "Creator Agent": [
+                "file_processor", "create_presentation", "create_report", 
+                "generate_image", "send_message", "reminder", "virtual_hand_control",
+                "delegate_to_creator"
             ]
         }
 

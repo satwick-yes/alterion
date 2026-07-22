@@ -15,6 +15,25 @@ def _get_base_dir() -> Path:
 
 BASE_DIR = _get_base_dir()
 
+APP_PACKAGES = {
+    "instagram": "com.instagram.android",
+    "whatsapp": "com.whatsapp",
+    "youtube": "com.google.android.youtube",
+    "chrome": "com.android.chrome",
+    "maps": "com.google.android.apps.maps",
+    "gmail": "com.google.android.gm",
+    "spotify": "com.spotify.music",
+    "tiktok": "com.zhiliaoapp.musically",
+    "twitter": "com.twitter.android",
+    "x": "com.twitter.android",
+    "facebook": "com.facebook.katana",
+    "snapchat": "com.snapchat.android",
+    "discord": "com.discord",
+    "telegram": "org.telegram.messenger",
+    "netflix": "com.netflix.mediaclient",
+    "settings": "com.android.settings",
+}
+
 def _load_keys() -> dict:
     try:
         with open(BASE_DIR / "config" / "api_keys.json", "r", encoding="utf-8") as f:
@@ -40,13 +59,35 @@ def _check_device_connected():
     output = result.stdout.decode("utf-8")
     lines = output.strip().split("\n")
     devices = [line for line in lines[1:] if "device" in line and "offline" not in line]
-    if not devices:
-        raise RuntimeError(
-            "No active Android device found. Since you want to use wireless ADB, "
-            "please ensure your phone is connected to the same Wi-Fi network and run: "
-            "`platform-tools\\adb.exe connect <YOUR_PHONE_IP>:5555` in your terminal. "
-            "If using Android 11+ Wireless Debugging, use the specific port shown in Developer Options."
-        )
+    if devices:
+        return
+
+    print("[MobileControl] No device connected, attempting mDNS auto-connect...")
+    try:
+        mdns_result = _run_adb_command(["mdns", "services"])
+        mdns_output = mdns_result.stdout.decode("utf-8")
+        for line in mdns_output.strip().split("\n"):
+            if "_adb-tls-connect._tcp" in line:
+                parts = line.split()
+                if len(parts) >= 3:
+                    ip_port = parts[2]
+                    print(f"[MobileControl] Found mDNS device at {ip_port}. Attempting connection...")
+                    _run_adb_command(["connect", ip_port])
+                    check_result = _run_adb_command(["devices"])
+                    check_out = check_result.stdout.decode("utf-8")
+                    check_lines = check_out.strip().split("\n")
+                    if any("device" in l and "offline" not in l for l in check_lines[1:]):
+                        print("[MobileControl] Successfully auto-connected to mDNS device.")
+                        return
+    except Exception as e:
+        print(f"[MobileControl] Auto-connect failed: {e}")
+
+    raise RuntimeError(
+        "No active Android device found. Since you want to use wireless ADB, "
+        "please ensure your phone is connected to the same Wi-Fi network and run: "
+        "`platform-tools\\adb.exe connect <YOUR_PHONE_IP>:5555` in your terminal. "
+        "If using Android 11+ Wireless Debugging, use the specific port shown in Developer Options."
+    )
 
 def _take_screenshot() -> tuple[str, int, int]:
     result = _run_adb_command(["exec-out", "screencap", "-p"])
@@ -103,7 +144,7 @@ def _vision_step(goal: str, b64_image: str, width: int, height: int, history: st
         from google.genai import types
         client = genai.Client(api_key=gemini_key)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=[
                 types.Part.from_bytes(data=base64.b64decode(b64_image), mime_type="image/jpeg"),
                 types.Part.from_text(text=prompt)
@@ -148,6 +189,48 @@ def mobile_control(parameters: dict, player=None, speak: Optional[Callable] = No
             time.sleep(1)
     except Exception:
         pass
+
+    # Fast path: intent to open an app
+    goal_lower = goal.lower()
+    
+    if "unlock" in goal_lower:
+        pin_match = re.search(r'\b(\d{4,8})\b', goal_lower)
+        if pin_match:
+            pin = pin_match.group(1)
+            print(f"[MobileControl] Fast-path: unlocking phone with PIN {pin}")
+            try:
+                _run_adb_command(["shell", "input", "keyevent", "224"]) # WAKEUP
+                time.sleep(0.5)
+                _run_adb_command(["shell", "input", "swipe", "500", "1000", "500", "200", "300"])
+                time.sleep(2)
+                
+                for digit in pin:
+                    keycode = str(int(digit) + 7) # '0'->7, '1'->8, etc.
+                    _run_adb_command(["shell", "input", "keyevent", keycode])
+                    time.sleep(0.3)
+                    
+                _run_adb_command(["shell", "input", "keyevent", "66"])
+                time.sleep(2.0)
+                
+                # Check if user also wanted to open something
+                if "open" not in goal_lower:
+                    return "Successfully unlocked the phone."
+            except Exception as e:
+                print(f"[MobileControl] Fast-path unlock failed: {e}")
+
+    if "open " in goal_lower:
+        app_name = goal_lower.replace("open ", "").replace("on my phone", "").strip()
+        for known_app, pkg in APP_PACKAGES.items():
+            if known_app in app_name:
+                print(f"[MobileControl] Fast-path: launching {pkg} directly via adb.")
+                try:
+                    _run_adb_command(["shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"])
+                    print(f"Successfully opened {known_app} on the mobile device. Continuing to vision loop...")
+                    time.sleep(3.0)
+                    break
+                except Exception as e:
+                    print(f"[MobileControl] Fast-path launch failed: {e}")
+                    pass
 
     for step in range(max_steps):
         print(f"\n[MobileControl] Step {step+1}/{max_steps}")

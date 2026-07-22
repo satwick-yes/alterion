@@ -17,7 +17,7 @@ import subprocess
 import tempfile
 import os
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 from agent.planner       import create_plan, replan
 from agent.error_handler import analyze_error, generate_fix, ErrorDecision
@@ -74,7 +74,7 @@ def _run_generated_code(description: str, speak: Callable | None = None) -> str:
         code = inference_client.generate_text(
             prompt=f"Write Python code to accomplish this task:\n\n{description}",
             system_instruction=system_inst,
-            model="gemini-2.5-flash"
+            model="gemini-3.5-flash"
         )
         code = re.sub(r"```(?:python)?", "", code).strip().rstrip("`").strip()
 
@@ -141,7 +141,7 @@ def _detect_language(text: str) -> str:
         response = inference_client.generate_text(
             prompt=f"What language is this text written in? Reply with ONLY the language name in English (e.g. Turkish, English, French).\n\nText: {text[:200]}",
             system_instruction="You are a language detector. Reply only with the language name.",
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             temperature=0.0
         )
         return response.strip()
@@ -171,7 +171,7 @@ def _translate_to_goal_language(content: str, goal: str) -> str:
         translated = inference_client.generate_text(
             prompt=prompt,
             system_instruction="You are a translator. Output only the translation.",
-            model="gemini-2.5-flash"
+            model="gemini-3.5-flash"
         )
         print(f"[Executor] ✅ Translation done ({target_lang})")
         return translated
@@ -276,8 +276,9 @@ class AgentExecutor:
     def execute(
         self,
         goal:        str,
-        speak:       Callable | None        = None,
-        cancel_flag: threading.Event | None = None,
+        speak:       Optional[Callable]        = None,
+        cancel_flag: Optional[threading.Event] = None,
+        companion_name: Optional[str]          = None,
     ) -> str:
         import uuid
         import asyncio
@@ -288,7 +289,14 @@ class AgentExecutor:
         print(f"\n[Executor] 🎯 Goal: {goal}")
         
         # 1. Intent Routing to Companion
-        companion = semantic_router.route_intent(goal)
+        if companion_name:
+            if companion_name in semantic_router.companions:
+                companion = semantic_router.companions[companion_name]
+            else:
+                companion = semantic_router.route_intent(goal)
+        else:
+            companion = semantic_router.route_intent(goal)
+            
         self.companion_name = companion.name
         
         # Get/Register task ID
@@ -319,7 +327,7 @@ class AgentExecutor:
         replan_attempts = 0
         completed_steps = []
         step_results    = {} 
-        plan            = create_plan(goal)
+        plan            = create_plan(goal, allowed_tools=companion.allowed_tools)
 
         while True:
             steps = plan.get("steps", [])
@@ -358,11 +366,8 @@ class AgentExecutor:
                         state_manager.update_task_status(task_id, TaskState.CANCELLED)
                         break
                     try:
-                        from agent.orchestrator import semantic_router
-                        step_companion = semantic_router.route_intent(goal=desc, tool_name=tool)
-                        
                         state_manager.add_task_step(task_id, step_num, tool, desc)
-                        result = _call_tool(tool, params, speak, step_companion.name)
+                        result = _call_tool(tool, params, speak, self.companion_name)
                         step_results[step_num] = result 
                         completed_steps.append(step)
                         state_manager.update_task_step_status(task_id, step_num, "completed", result)
@@ -442,7 +447,7 @@ class AgentExecutor:
             if speak: speak("Adjusting my approach, sir.")
 
             replan_attempts += 1
-            plan = replan(goal, completed_steps, failed_step, failed_error)
+            plan = replan(goal, completed_steps, failed_step, failed_error, allowed_tools=companion.allowed_tools)
 
     def _summarize(self, goal: str, completed_steps: list, speak: Callable | None) -> str:
         fallback = f"All done, sir. Completed {len(completed_steps)} steps for: {goal[:60]}."
@@ -458,7 +463,7 @@ class AgentExecutor:
             summary = inference_client.generate_text(
                 prompt=prompt,
                 system_instruction="You are Tony Stark's assistant Jarvis. Summarize results concisely.",
-                model="gemini-2.5-flash"
+                model="gemini-3.5-flash"
             )
             if speak: speak(summary)
             return summary

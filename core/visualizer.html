@@ -714,11 +714,13 @@
         if (!this.running) return;
         requestAnimationFrame(() => this.runLoop());
 
+        const now = performance.now();
+
         if (!this.landmarker || video.readyState < 2) return;
         if (video.currentTime === this.lastVideoTime) return;
         this.lastVideoTime = video.currentTime;
 
-        const result = this.landmarker.detectForVideo(video, performance.now());
+        const result = this.landmarker.detectForVideo(video, now);
         this.processHands(result.landmarks, result.handedness.map(h => h[0]?.categoryName ?? "?"));
         this.drawOverlay(result.landmarks);
       }
@@ -758,13 +760,24 @@
           }
 
           // System Control Integration
-          if (gestureController) {
+          if (gestureController && i === 0) {
             // Mouse Movement (Index Tip)
-            gestureController.mouseMove(1 - lm[8].x, lm[8].y);
+            const mx = 1 - lm[8].x;
+            const my = lm[8].y;
+            const now = performance.now();
+            
+            if (!state.lastMouse) state.lastMouse = {x: -1, y: -1, time: 0};
+            const dist = Math.hypot(mx - state.lastMouse.x, my - state.lastMouse.y);
+            
+            // Only send IPC if finger actually moved (prevents IPC spam), but allow native refresh rate
+            if (dist > 0.0005) {
+              gestureController.mouseMove(mx, my);
+              state.lastMouse = {x: mx, y: my, time: now};
+            }
 
             // Clicks
             const middlePinch = Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y) / handScale;
-            if (pinchRatio < 0.25) {
+            if (pinchRatio < 0.35) {
               if (!state.leftClicking) {
                 state.leftClicking = true;
                 gestureController.mouseDown();
@@ -776,7 +789,7 @@
               }
             }
 
-            if (middlePinch < 0.25) {
+            if (middlePinch < 0.35) {
               if (!state.rightClicking) {
                 state.rightClicking = true;
                 gestureController.mouseClickRight();
@@ -786,11 +799,11 @@
             }
 
             // Swipes
-            const now = performance.now();
-            state.history.push({x: 1 - lm[0].x, y: lm[0].y, time: now});
+            const nowTime = performance.now();
+            state.history.push({x: 1 - lm[0].x, y: lm[0].y, time: nowTime});
             if (state.history.length > 15) state.history.shift();
 
-            if (state.history.length === 15 && (!state.swipedRecently || now - state.swipedRecently > 1000)) {
+            if (state.history.length === 15 && (!state.swipedRecently || nowTime - state.swipedRecently > 1000)) {
               const start = state.history[0];
               const end = state.history[14];
               const dt = end.time - start.time;
@@ -803,10 +816,10 @@
                 const speedThresh = 0.0025;
                 if (Math.abs(vx) > speedThresh && Math.abs(vx) > Math.abs(vy)) {
                   gestureController.swipe(vx > 0 ? "right" : "left");
-                  state.swipedRecently = now;
+                  state.swipedRecently = nowTime;
                 } else if (Math.abs(vy) > speedThresh && Math.abs(vy) > Math.abs(vx)) {
                   gestureController.swipe(vy > 0 ? "down" : "up");
-                  state.swipedRecently = now;
+                  state.swipedRecently = nowTime;
                 }
               }
             }
@@ -924,14 +937,14 @@
         cameraActive = true;
         gestureBtn.innerText = "INITIALIZING…";
         try {
-          handTracker = new MediaPipeHandTracker();
+          handTracker = new MediaPipeHandTracker({ delegate: 'GPU' });
           await handTracker.init();
           await handTracker.start();
           cameraPanel.classList.add("visible");
           gestureBtn.innerText = "GESTURES ON";
         } catch (e) {
-          console.error(e);
-          gestureBtn.innerText = "GESTURES FAILED";
+          console.error("Gesture error: " + (e.message || "Unknown error"));
+          gestureBtn.innerText = "ERR: " + (e.message || String(e)).substring(0, 18);
           cameraActive = false;
         }
       }

@@ -195,18 +195,22 @@ def _get_api_key() -> str:
         return json.load(f)["gemini_api_key"]
 
 
-def create_plan(goal: str, context: str = "") -> dict:
+def create_plan(goal: str, context: str = "", allowed_tools: list[str] | None = None) -> dict:
     from core.inference_wrapper import inference_client
 
     user_input = f"Goal: {goal}"
     if context:
         user_input += f"\n\nContext: {context}"
 
+    prompt_extension = ""
+    if allowed_tools:
+        prompt_extension = f"\n\nCRITICAL: You are only allowed to use the following tools: {', '.join(allowed_tools)}. DO NOT use any other tools."
+
     try:
         plan = inference_client.generate_json(
             prompt=user_input,
-            system_instruction=PLANNER_PROMPT,
-            model="gemini-2.5-flash"
+            system_instruction=PLANNER_PROMPT + prompt_extension,
+            model="gemini-3.5-flash"
         )
 
         if "steps" not in plan or not isinstance(plan["steps"], list):
@@ -246,7 +250,7 @@ def _fallback_plan(goal: str) -> dict:
     }
 
 
-def replan(goal: str, completed_steps: list, failed_step: dict, error: str) -> dict:
+def replan(goal: str, completed_steps: list, failed_step: dict, error: str, allowed_tools: list[str] | None = None) -> dict:
     from core.inference_wrapper import inference_client
 
     completed_summary = "\n".join(
@@ -263,11 +267,15 @@ Error: {error}
 
 Create a REVISED plan for the remaining work only. Do not repeat completed steps."""
 
+    prompt_extension = ""
+    if allowed_tools:
+        prompt_extension = f"\n\nCRITICAL: You are only allowed to use the following tools: {', '.join(allowed_tools)}. DO NOT use any other tools."
+
     try:
         plan = inference_client.generate_json(
             prompt=prompt,
-            system_instruction=PLANNER_PROMPT,
-            model="gemini-2.5-flash"
+            system_instruction=PLANNER_PROMPT + prompt_extension,
+            model="gemini-3.5-flash"
         )
 
         for step in plan.get("steps", []):
@@ -279,4 +287,4 @@ Create a REVISED plan for the remaining work only. Do not repeat completed steps
         return plan
     except Exception as e:
         print(f"[Planner] ⚠️ Replan failed: {e}")
-        return _fallback_plan(goal)
+        return _fallback_plan(goal)

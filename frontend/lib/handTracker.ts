@@ -155,15 +155,21 @@ export class HandTracker {
     this.emitStatus({ hands: 0, mode: "idle" });
   }
 
+  private lastRunTime = 0;
+
   private loop = () => {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.loop);
+
+    const now = performance.now();
+    if (this.lastRunTime && now - this.lastRunTime < 33) return; // Cap at 30 FPS to prevent UI lag
+    this.lastRunTime = now;
 
     if (!this.landmarker || this.video.readyState < 2) return;
     if (this.video.currentTime === this.lastVideoTime) return;
     this.lastVideoTime = this.video.currentTime;
 
-    const result = this.landmarker.detectForVideo(this.video, performance.now());
+    const result = this.landmarker.detectForVideo(this.video, now);
     this.processHands(result.landmarks, result.handedness.map((h) => h[0]?.categoryName ?? "?"));
     this.drawOverlay(result.landmarks);
   };

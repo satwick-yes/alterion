@@ -32,3 +32,14 @@ config/api_keys.json
 config/user_voice_profile.pt
 config/temp_enroll.wav
 models/
+
+# User Data & Runtime Artifacts
+__pycache__/
+*.pyc
+logs/
+memory/
+presentations/
+jarvis.pid
+adb_error.log
+.agents/
+scratch/

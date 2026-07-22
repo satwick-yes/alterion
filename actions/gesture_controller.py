@@ -46,6 +46,20 @@ class GestureController(QObject):
         self.last_mouse_x = new_x
         self.last_mouse_y = new_y
 
+    @pyqtSlot(float, float)
+    def mouseMoveAbsolute(self, norm_x: float, norm_y: float):
+        """Moves the mouse precisely to the normalized coordinates without scaling."""
+        target_x = int(norm_x * self.screen_w)
+        target_y = int(norm_y * self.screen_h)
+
+        # Clamp to screen
+        target_x = max(0, min(self.screen_w - 1, target_x))
+        target_y = max(0, min(self.screen_h - 1, target_y))
+        
+        pyautogui.moveTo(target_x, target_y)
+        self.last_mouse_x = target_x
+        self.last_mouse_y = target_y
+
     @pyqtSlot()
     def mouseClickLeft(self):
         pyautogui.click(button='left')

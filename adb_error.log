@@ -1,1 +1,0 @@
-No active Android device found. Since you want to use wireless ADB, please ensure your phone is connected to the same Wi-Fi network and run: `platform-tools\adb.exe connect <YOUR_PHONE_IP>:5555` in your terminal. If using Android 11+ Wireless Debugging, use the specific port shown in Developer Options.

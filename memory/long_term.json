@@ -25,6 +25,10 @@
     "favorite_food": {
       "value": "biryani",
       "updated": "2026-07-20"
+    },
+    "default_browser": {
+      "value": "Brave",
+      "updated": "2026-07-22"
     }
   },
   "projects": {},

@@ -143,7 +143,7 @@ class InferenceWrapper:
 
     # --- GEMINI IMPLEMENTATIONS ---
     def _call_gemini_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
-        model = model or "gemini-2.5-flash"
+        model = model or "gemini-3.5-flash"
         try:
             from google import genai
             from google.genai import types
@@ -177,7 +177,7 @@ class InferenceWrapper:
                 raise RuntimeError(f"Gemini generation failed: {e2}")
 
     def _call_gemini_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
-        model = model or "gemini-2.5-flash"
+        model = model or "gemini-3.5-flash"
         try:
             from google import genai
             from google.genai import types

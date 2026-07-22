@@ -87,16 +87,26 @@ class _SysMetrics:
         self._last_net = psutil.net_io_counters()
         self._last_net_t = time.time()
         self._running = True
-        t = threading.Thread(target=self._loop, daemon=True)
+        t = threading.Thread(target=self._run_async_loop, daemon=True)
         t.start()
 
-    def _loop(self):
+    def _run_async_loop(self):
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        self._executor = ThreadPoolExecutor(max_workers=2)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._async_loop())
+
+    async def _async_loop(self):
+        import asyncio
+        loop = asyncio.get_event_loop()
         while self._running:
             try:
-                self._update()
+                await loop.run_in_executor(self._executor, self._update)
             except Exception:
                 pass
-            time.sleep(1.5)
+            await asyncio.sleep(1.5)
 
     def _update(self):
         cpu = psutil.cpu_percent(interval=None)
@@ -281,9 +291,7 @@ class HudCanvas(QWebEngineView):
         self.channel.registerObject("gesture_controller", self.gesture_controller)
         self.page().setWebChannel(self.channel)
 
-        self._tmr = QTimer(self)
-        self._tmr.timeout.connect(self._step)
-        self._tmr.start(100) # Sync state 10 times per second
+        # HudCanvas timer removed - updates are now strictly event-driven via property setters
 
     def _handle_permission(self, securityOrigin, feature):
         if feature in (self.page().Feature.MediaAudioCapture, 
@@ -693,7 +701,7 @@ class _DropCanvas(QWidget):
 
 
 class SetupOverlay(QWidget):
-    done = pyqtSignal(str, str, str)
+    done = pyqtSignal(str, str, str, str, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -764,6 +772,40 @@ class SetupOverlay(QWidget):
             QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
         """)
         layout.addWidget(self._or_input)
+        layout.addSpacing(8)
+
+        layout.addWidget(_lbl("OPENAI API KEY", 8, color=C.TEXT_DIM,
+                       align=Qt.AlignmentFlag.AlignLeft))
+        self._openai_input = QLineEdit()
+        self._openai_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self._openai_input.setPlaceholderText("sk-proj-…")
+        self._openai_input.setFont(QFont("Courier New", 10))
+        self._openai_input.setFixedHeight(32)
+        self._openai_input.setStyleSheet(f"""
+            QLineEdit {{
+                background: #000d12; color: {C.TEXT};
+                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
+            }}
+            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
+        """)
+        layout.addWidget(self._openai_input)
+        layout.addSpacing(8)
+
+        layout.addWidget(_lbl("NVIDIA API KEY", 8, color=C.TEXT_DIM,
+                       align=Qt.AlignmentFlag.AlignLeft))
+        self._nvidia_input = QLineEdit()
+        self._nvidia_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self._nvidia_input.setPlaceholderText("nvapi-…")
+        self._nvidia_input.setFont(QFont("Courier New", 10))
+        self._nvidia_input.setFixedHeight(32)
+        self._nvidia_input.setStyleSheet(f"""
+            QLineEdit {{
+                background: #000d12; color: {C.TEXT};
+                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
+            }}
+            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
+        """)
+        layout.addWidget(self._nvidia_input)
 
         layout.addSpacing(12)
 
@@ -831,6 +873,10 @@ class SetupOverlay(QWidget):
     def _submit(self):
         key = self._key_input.text().strip()
         or_key = self._or_input.text().strip()
+        openai_key = self._openai_input.text().strip()
+        nvidia_key = self._nvidia_input.text().strip()
+        
+        # We can make them optional or required, but to keep it simple, we just pass them.
         if not key:
             self._key_input.setStyleSheet(
                 self._key_input.styleSheet() +
@@ -843,7 +889,7 @@ class SetupOverlay(QWidget):
                 f" QLineEdit {{ border: 1px solid {C.RED}; }}"
             )
             return
-        self.done.emit(key, or_key, self._sel_os)
+        self.done.emit(key, or_key, openai_key, nvidia_key, self._sel_os)
 
 
 class MainWindow(QMainWindow):
@@ -1319,7 +1365,7 @@ class MainWindow(QMainWindow):
             ov = SetupOverlay(None)
             ov.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
             screen = QApplication.primaryScreen().availableGeometry()
-            ow, oh = 460, 430
+            ow, oh = 460, 580
             ov.setGeometry(
                 (screen.width() - ow) // 2,
                 (screen.height() - oh) // 2,
@@ -1328,7 +1374,7 @@ class MainWindow(QMainWindow):
         else:
             ov = SetupOverlay(self.centralWidget())
             cw = self.centralWidget()
-            ow, oh = 460, 430
+            ow, oh = 460, 580
             ov.setGeometry(
                 (cw.width()  - ow) // 2,
                 (cw.height() - oh) // 2,
@@ -1339,12 +1385,14 @@ class MainWindow(QMainWindow):
         self._overlay = ov
 
     # Change signature:
-    def _on_setup_done(self, key: str, or_key: str, os_name: str):
+    def _on_setup_done(self, key: str, or_key: str, openai_key: str, nvidia_key: str, os_name: str):
         os.makedirs(CONFIG_DIR, exist_ok=True)
         API_FILE.write_text(
             json.dumps({
                 "gemini_api_key":    key,
                 "openrouter_api_key": or_key,
+                "openai_api_key": openai_key,
+                "nvidia_api_key": nvidia_key,
                 "os_system":         os_name,
             }, indent=4),
             encoding="utf-8",
@@ -1401,7 +1449,10 @@ class JarvisUI:
         self._win._state_sig.emit(state)
 
     def set_mic_level(self, level: float):
-        self._win._mic_sig.emit(level)
+        try:
+            self._win._mic_sig.emit(level)
+        except RuntimeError:
+            pass
 
     def write_log(self, text: str):
         self._win._log_sig.emit(text)

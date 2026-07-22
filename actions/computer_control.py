@@ -1,5 +1,6 @@
 #computer_control.py
 import io
+import base64
 import json
 import re
 import string
@@ -345,7 +346,7 @@ def _screen_find(description: str) -> tuple[int, int] | None:
             from google.genai import types as _types
             _client = _genai.Client(api_key=_key)
             _resp = _client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.1-flash-image-preview",
                 contents=[
                     _types.Part.from_bytes(
                         data=base64.b64decode(b64),
@@ -360,6 +361,36 @@ def _screen_find(description: str) -> tuple[int, int] | None:
                 return coords
     except Exception as e:
         print(f"[ComputerControl] Gemini screen_find failed: {e}")
+
+    # --- Nvidia Vision (fallback) ---
+    try:
+        from pathlib import Path as _Path
+        import json as _json
+        _cfg = _BASE / "config" / "api_keys.json"
+        _key = _json.loads(_cfg.read_text(encoding="utf-8")).get("nvidia_api_key", "").strip()
+        if _key:
+            import openai as _openai
+            _client = _openai.OpenAI(api_key=_key, base_url="https://integrate.api.nvidia.com/v1")
+            _resp = _client.chat.completions.create(
+                model="meta/llama-3.2-90b-vision-instruct",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
+                        ]
+                    }
+                ],
+                max_tokens=20,
+                temperature=0.0
+            )
+            coords = _parse(_resp.choices[0].message.content.strip())
+            if coords:
+                print(f"[ComputerControl] 🔍 Nvidia found '{description}' at {coords}")
+                return coords
+    except Exception as e:
+        print(f"[ComputerControl] Nvidia screen_find failed: {e}")
 
     # --- OpenRouter Vision (fallback) ---
     try:
@@ -494,15 +525,21 @@ def computer_control(
             coords = _screen_find(params.get("description", ""))
             return f"{coords[0]},{coords[1]}" if coords else "NOT_FOUND"
 
-        if action == "screen_click":
-            desc = params.get("description", "")
-            time.sleep(0.6)   # wait for focused window to fully render
-            coords = _screen_find(desc)
-            if coords:
-                time.sleep(0.2)
-                _click(x=coords[0], y=coords[1])
-                return f"Clicked '{desc}' at {coords}"
-            return f"Element not found on screen: '{desc}'"
+        if action in ["smart_click", "screen_click"]:
+            element_desc = params.get("description", "").lower()
+            print(f"[ComputerControl] Triggering Visual Hand for: {element_desc}")
+            
+            try:
+                # Route it to the virtual hand logic we built
+                from actions.virtual_hand_control import open_desktop_icon
+                
+                # Clean up the description (e.g., "click on recycle bin icon on the desktop" -> "recycle bin")
+                clean_target = element_desc.replace("click on", "").replace("icon", "").replace("on the desktop", "").strip()
+                
+                result = open_desktop_icon(clean_target)
+                return result
+            except Exception as e:
+                return f"Failed to execute visual smart click: {str(e)}"
 
         if action == "wait":
             secs = float(params.get("seconds", 1.0))

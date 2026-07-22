@@ -1,0 +1,107 @@
+.panel-container {
+  background: rgba(10, 25, 47, 0.6);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 243, 255, 0.05);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.8), transparent);
+}
+
+.panel-header {
+  font-family: "Inter", sans-serif;
+  color: #e6f1ff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.glowing-text {
+  color: #00f3ff;
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+}
+
+.cyan-btn {
+  background: transparent;
+  border: 1px solid #00f3ff;
+  color: #00f3ff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Inter", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+}
+
+.cyan-btn:hover {
+  background: rgba(0, 243, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+/* Sidebar Navigation */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: rgba(2, 12, 27, 0.8);
+  border-right: 1px solid rgba(0, 243, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  backdrop-filter: blur(10px);
+}
+
+.nav-link {
+  padding: 15px 25px;
+  color: #8892b0;
+  text-decoration: none;
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #00f3ff;
+  background: rgba(0, 243, 255, 0.05);
+  border-left: 3px solid #00f3ff;
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+}
+
+.main-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #020c1b;
+  overflow: hidden;
+}
+
+.content-area {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Grid Layouts for Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
+  width: 100%;
+}

@@ -61,7 +61,10 @@ class InferenceWrapper:
         provider = provider or self.default_provider
         
         try:
-            if provider == "gemini":
+            if provider == "local":
+                from core.local_engine import local_engine
+                return local_engine.generate_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "gemini":
                 return self._call_gemini_text(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "openrouter":
                 return self._call_openrouter_text(prompt, system_instruction, model, temperature, max_tokens)
@@ -74,10 +77,13 @@ class InferenceWrapper:
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
-            # Automatic fallback to OpenRouter if primary provider fails and OpenRouter key exists
+            # Automatic fallback to OpenRouter/Groq if primary provider fails
             if provider != "openrouter" and self.openrouter_key:
                 logger.warning(f"Provider '{provider}' text generation failed: {e}. Falling back to openrouter.")
                 return self._call_openrouter_text(prompt, system_instruction, None, temperature, max_tokens)
+            elif provider != "groq" and self.groq_key:
+                logger.warning(f"Provider '{provider}' text generation failed: {e}. Falling back to groq.")
+                return self._call_groq_text(prompt, system_instruction, None, temperature, max_tokens)
             raise
 
     def generate_json(

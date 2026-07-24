@@ -1,0 +1,20 @@
+{
+    "local_engine": {
+        "enabled": true,
+        "ollama_url": "http://localhost:11434",
+        "preferred_models": [
+            "qwen2.5-coder:latest",
+            "llama3.3:latest",
+            "llama3:latest",
+            "mistral:latest",
+            "phi3:latest"
+        ],
+        "timeout": 5
+    },
+    "tier_routing": {
+        "mode": "hybrid_tri_tier",
+        "auto_fallback_to_cloud": true,
+        "fallback_cloud_provider": "groq",
+        "master_cloud_provider": "gemini"
+    }
+}

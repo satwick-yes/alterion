@@ -213,7 +213,13 @@ def read_file(path: str, max_chars: int = 3000) -> str:
         if not target.is_file():
             return f"Not a file: {path}"
 
-        content = target.read_text(encoding="utf-8", errors="ignore")
+        if target.suffix.lower() == '.pdf':
+            import PyPDF2
+            with open(target, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                content = "\n".join(page.extract_text() or "" for page in reader.pages)
+        else:
+            content = target.read_text(encoding="utf-8", errors="ignore")
         if len(content) > max_chars:
             content = content[:max_chars] + f"\n\n... (truncated, {len(content)} total chars)"
         return content

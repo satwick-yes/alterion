@@ -64,7 +64,7 @@ class MultiAgentFramework:
             res = inference_client.generate_text(
                 prompt=prompt,
                 system_instruction="Reply only YES or NO.",
-                model="gemini-3.5-flash",
+                model="gemini-3.1-flash-lite",
                 temperature=0.0
             )
             return "YES" in res.upper()
@@ -105,7 +105,7 @@ class MultiAgentFramework:
             response = inference_client.generate_json(
                 prompt=decomposition_prompt,
                 system_instruction="You are a decomposition expert. Return only JSON schema.",
-                model="gemini-3.5-flash"
+                model="gemini-3.1-flash-lite"
             )
             sub_tasks = response.get("sub_tasks", [])
             workers = []

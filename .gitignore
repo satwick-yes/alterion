@@ -43,3 +43,4 @@ jarvis.pid
 adb_error.log
 .agents/
 scratch/
+qr_code.png

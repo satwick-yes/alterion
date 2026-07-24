@@ -13,7 +13,7 @@ def get_api_key():
 class JarvisAgent:
     def __init__(self):
         self.client = genai.Client(api_key=get_api_key())
-        self.model_name = "gemini-3.5-flash"
+        self.model_name = "gemini-3.1-flash-lite"
         
         # Define a simple tool for PC control
         self.run_command_tool = types.Tool(

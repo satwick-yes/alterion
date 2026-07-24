@@ -80,7 +80,8 @@ class WorkerManager:
                 url = m.group(2).strip()
                 return open_app(parameters={"app_name": app_name, "url": url}, response=None, player=player)
             
-            app_name = task.replace("open ", "").replace("launch ", "").replace("Open ", "").replace("Launch ", "")
+            clean_task = re.sub(r'(?i)^(?:open|launch)\s+', '', task)
+            app_name = re.split(r'(?i)\s*(?:,|and|then)\s+', clean_task)[0]
             return open_app(parameters={"app_name": app_name}, response=None, player=player)
         elif "screen" in task and ("look" in task or "see" in task):
             threading.Thread(
@@ -94,7 +95,7 @@ class WorkerManager:
         elif "click" in task or "type" in task or "scroll" in task:
             return advanced_computer_use(parameters={"goal": task}, player=player, speak=speak)
         else:
-            return computer_settings(parameters={"action": "unknown", "description": task}, response=None, player=player)
+            return WorkerManager._run_in_background(dev_agent, {"parameters": {"task": task}, "player": player, "speak": speak}, async_callback, "Operator-Fallback")
 
     @staticmethod
     def _run_researcher(task, args, player, speak, async_callback=None):
@@ -122,10 +123,10 @@ class WorkerManager:
     def _run_creator(task, args, player, speak, async_callback=None):
         if "message" in task or "whatsapp" in task or "telegram" in task:
             import re
-            m = re.search(r'(?:send a message to|send message to|text|message|tell)\s+([\w\s]+?)\s+(?:saying that|saying|that|to)\s+(.*)', task.lower())
+            m = re.search(r'(?:send\s+(?:a\s+)?(?:whatsapp\s+|telegram\s+)?message\s+to|message\s+to|text\s+to|text|message|tell)\s+(.*?)\s+(?:saying\s+that|saying|that|to)\s+(.*)', task.lower())
             if m:
-                receiver = m.group(1).strip()
-                message_text = m.group(2).strip()
+                receiver = m.group(1).strip(' \'"')
+                message_text = m.group(2).strip(' \'"')
             else:
                 receiver = task
                 message_text = task

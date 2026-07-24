@@ -79,6 +79,16 @@ TASK_LIBRARY = {
     "enable magnifier": {"type": "hotkey", "keys": ["win", "+"]},
     "enable narrator": {"type": "hotkey", "keys": ["ctrl", "win", "enter"]},
     "use the on-screen keyboard": {"type": "cmd", "cmd": "osk"},
+
+    # PORTED JARVIS EXTENDED UTILITIES
+    "check wifi passwords": {"type": "func", "module": "actions.wifi_tools", "func": "get_wifi_passwords"},
+    "show wifi status": {"type": "func", "module": "actions.wifi_tools", "func": "get_wifi_status"},
+    "check system stats": {"type": "func", "module": "actions.system_diagnostics", "func": "get_system_stats"},
+    "run speed test": {"type": "func", "module": "actions.network_tools", "func": "run_speed_test"},
+    "check ip address": {"type": "func", "module": "actions.network_tools", "func": "get_ip_info"},
+    "scan local network": {"type": "func", "module": "actions.network_tools", "func": "scan_local_network"},
+    "organize downloads folder": {"type": "func", "module": "actions.file_organizer", "func": "organize_folder", "args": ["~/Downloads"]},
+    "organize desktop folder": {"type": "func", "module": "actions.file_organizer", "func": "organize_folder", "args": ["~/Desktop"]},
 }
 
 def execute_hardcoded_task(task_name: str) -> str:
@@ -115,5 +125,16 @@ def execute_hardcoded_task(task_name: str) -> str:
         time.sleep(0.5) # Give UI time to register
         pyautogui.hotkey(*task["keys"])
         return f"Successfully pressed keys for: {task_name}"
+
+    elif action_type == "func":
+        import importlib
+        try:
+            mod = importlib.import_module(task["module"])
+            fn = getattr(mod, task["func"])
+            args = task.get("args", [])
+            print(f"[TaskLibrary] Executing Function: {task['module']}.{task['func']}")
+            return str(fn(*args))
+        except Exception as e:
+            return f"Failed to execute action function: {e}"
         
     return ""

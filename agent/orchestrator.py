@@ -79,7 +79,7 @@ class SemanticRouter:
             response = inference_client.generate_json(
                 prompt=classification_prompt,
                 system_instruction="You are a precise classifier mapping requests to companions. Return JSON only.",
-                model="gemini-3.5-flash"
+                model="gemini-3.1-flash-lite"
             )
             companion_key = response.get("companion", "operator").lower()
             if companion_key not in self.companions:

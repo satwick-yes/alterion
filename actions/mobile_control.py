@@ -144,7 +144,7 @@ def _vision_step(goal: str, b64_image: str, width: int, height: int, history: st
         from google.genai import types
         client = genai.Client(api_key=gemini_key)
         response = client.models.generate_content(
-            model="gemini-3.5-flash",
+            model="gemini-3.1-flash-lite",
             contents=[
                 types.Part.from_bytes(data=base64.b64decode(b64_image), mime_type="image/jpeg"),
                 types.Part.from_text(text=prompt)

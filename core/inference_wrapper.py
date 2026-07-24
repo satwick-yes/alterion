@@ -22,6 +22,7 @@ class InferenceWrapper:
         self.openrouter_key = ""
         self.nvidia_key = ""
         self.openai_key = ""
+        self.groq_key = ""
         self.default_provider = "gemini"
         self._load_keys()
 
@@ -34,10 +35,14 @@ class InferenceWrapper:
                 self.openrouter_key = data.get("openrouter_api_key", "").strip()
                 self.nvidia_key = data.get("nvidia_api_key", "").strip()
                 self.openai_key = data.get("openai_api_key", "").strip()
+                self.groq_key = data.get("groq_api_key", "").strip()
             
             is_gemini_valid = bool(self.gemini_key)
+            is_groq_valid = bool(self.groq_key)
             
-            if is_gemini_valid:
+            if is_groq_valid:
+                self.default_provider = "groq"
+            elif is_gemini_valid:
                 self.default_provider = "gemini"
             else:
                 self.default_provider = "gemini" # fallback
@@ -64,6 +69,8 @@ class InferenceWrapper:
                 return self._call_nvidia_text(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "openai":
                 return self._call_openai_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "groq":
+                return self._call_groq_text(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -93,6 +100,8 @@ class InferenceWrapper:
                 return self._call_nvidia_json(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "openai":
                 return self._call_openai_json(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "groq":
+                return self._call_groq_json(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -143,7 +152,7 @@ class InferenceWrapper:
 
     # --- GEMINI IMPLEMENTATIONS ---
     def _call_gemini_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
-        model = model or "gemini-3.5-flash"
+        model = model or "gemini-3.1-flash-lite"
         try:
             from google import genai
             from google.genai import types
@@ -177,7 +186,7 @@ class InferenceWrapper:
                 raise RuntimeError(f"Gemini generation failed: {e2}")
 
     def _call_gemini_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
-        model = model or "gemini-3.5-flash"
+        model = model or "gemini-3.1-flash-lite"
         try:
             from google import genai
             from google.genai import types
@@ -327,6 +336,52 @@ class InferenceWrapper:
         except Exception as e:
             logger.error(f"OpenAI JSON failed: {e}")
             raise RuntimeError(f"OpenAI JSON generation failed: {e}")
+
+    # --- GROQ IMPLEMENTATIONS ---
+    def _call_groq_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        if not model or "gemini" in model.lower():
+            model = "llama-3.3-70b-versatile"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.groq_key, base_url="https://api.groq.com/openai/v1")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok
+            )
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Groq text failed: {e}")
+            raise RuntimeError(f"Groq generation failed: {e}")
+
+    def _call_groq_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
+        if not model or "gemini" in model.lower():
+            model = "llama-3.3-70b-versatile"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.groq_key, base_url="https://api.groq.com/openai/v1")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok,
+                response_format={"type": "json_object"}
+            )
+            return json.loads(resp.choices[0].message.content.strip())
+        except Exception as e:
+            logger.error(f"Groq JSON failed: {e}")
+            raise RuntimeError(f"Groq JSON generation failed: {e}")
 
     def generate_consensus_text(
         self,

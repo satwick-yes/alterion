@@ -31,9 +31,23 @@
       "updated": "2026-07-22"
     }
   },
-  "projects": {},
+  "projects": {
+    "conference_paper": {
+      "value": "research paper for IEEE conference",
+      "updated": "2026-07-24"
+    },
+    "conference_presentation": {
+      "value": "presentation for IEEE conference",
+      "updated": "2026-07-24"
+    }
+  },
   "relationships": {},
-  "wishes": {},
+  "wishes": {
+    "conference_assistance": {
+      "value": "wants assistance analyzing documents",
+      "updated": "2026-07-24"
+    }
+  },
   "notes": {
     "phone_pin": {
       "value": "0718",
@@ -42,6 +56,14 @@
     "useful_research_tools": {
       "value": "Jarvis tools provides good science data and research papers",
       "updated": "2026-07-20"
+    },
+    "conference_date": {
+      "value": "conference tomorrow",
+      "updated": "2026-07-24"
+    },
+    "upload_documents": {
+      "value": "will upload research paper and presentation",
+      "updated": "2026-07-24"
     }
   }
 }

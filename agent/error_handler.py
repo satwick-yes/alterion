@@ -107,7 +107,7 @@ Attempt number: {attempt}"""
         result = inference_client.generate_json(
             prompt=prompt,
             system_instruction=ERROR_ANALYST_PROMPT,
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
         decision_str = result.get("decision", "replan").lower()
         decision_map = {
@@ -162,7 +162,7 @@ Return ONLY the Python code, no explanation."""
         code = inference_client.generate_text(
             prompt=prompt,
             system_instruction="You are an expert python programmer. Output only code.",
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
         import re
         code = re.sub(r"```(?:python)?", "", code).strip().rstrip("`").strip()

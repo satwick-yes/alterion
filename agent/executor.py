@@ -74,7 +74,7 @@ def _run_generated_code(description: str, speak: Callable | None = None) -> str:
         code = inference_client.generate_text(
             prompt=f"Write Python code to accomplish this task:\n\n{description}",
             system_instruction=system_inst,
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
         code = re.sub(r"```(?:python)?", "", code).strip().rstrip("`").strip()
 
@@ -141,7 +141,7 @@ def _detect_language(text: str) -> str:
         response = inference_client.generate_text(
             prompt=f"What language is this text written in? Reply with ONLY the language name in English (e.g. Turkish, English, French).\n\nText: {text[:200]}",
             system_instruction="You are a language detector. Reply only with the language name.",
-            model="gemini-3.5-flash",
+            model="gemini-3.1-flash-lite",
             temperature=0.0
         )
         return response.strip()
@@ -171,7 +171,7 @@ def _translate_to_goal_language(content: str, goal: str) -> str:
         translated = inference_client.generate_text(
             prompt=prompt,
             system_instruction="You are a translator. Output only the translation.",
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
         print(f"[Executor] ✅ Translation done ({target_lang})")
         return translated
@@ -463,7 +463,7 @@ class AgentExecutor:
             summary = inference_client.generate_text(
                 prompt=prompt,
                 system_instruction="You are Tony Stark's assistant Jarvis. Summarize results concisely.",
-                model="gemini-3.5-flash"
+                model="gemini-3.1-flash-lite"
             )
             if speak: speak(summary)
             return summary

@@ -210,7 +210,7 @@ def create_plan(goal: str, context: str = "", allowed_tools: list[str] | None = 
         plan = inference_client.generate_json(
             prompt=user_input,
             system_instruction=PLANNER_PROMPT + prompt_extension,
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
 
         if "steps" not in plan or not isinstance(plan["steps"], list):
@@ -275,7 +275,7 @@ Create a REVISED plan for the remaining work only. Do not repeat completed steps
         plan = inference_client.generate_json(
             prompt=prompt,
             system_instruction=PLANNER_PROMPT + prompt_extension,
-            model="gemini-3.5-flash"
+            model="gemini-3.1-flash-lite"
         )
 
         for step in plan.get("steps", []):

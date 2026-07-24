@@ -7,7 +7,7 @@ import time
 import pyautogui
 from pathlib import Path
 
-pyautogui.FAILSAFE = True
+pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0.08
 
 def _open_app(app_name: str) -> bool:
@@ -57,20 +57,28 @@ def _send_whatsapp(receiver: str, message: str) -> str:
     Steps: Open WhatsApp → Search contact → Click → Type → Send
     """
     try:
+        import pyautogui
+        pyautogui.FAILSAFE = False
+
         if not _open_app("WhatsApp"):
             return "Could not open WhatsApp."
 
-        time.sleep(1.5)
+        time.sleep(2.0)  
 
         pyautogui.hotkey("ctrl", "f")
         time.sleep(0.5)
         pyautogui.hotkey("ctrl", "a")
         pyautogui.press("backspace")
         pyautogui.write(receiver, interval=0.04)
-        time.sleep(2.0)  # Wait longer for search results
+        time.sleep(2.5)  # Wait for search results
 
+        # Note: Do NOT press "tab" here because in modern WhatsApp Desktop,
+        # tab focuses the "All" filter pill. Pressing "down" directly
+        # navigates to the first contact search result in the list.
+        pyautogui.press("down")
+        time.sleep(0.4)
         pyautogui.press("enter")
-        time.sleep(1.5)  # Wait longer for chat to open and focus
+        time.sleep(2.0)  # Wait for chat to open and focus text area
 
         pyautogui.write(message, interval=0.03)
         time.sleep(0.5)
@@ -255,7 +263,7 @@ def send_message(
     if not message_text:
         return "Please specify what message to send, sir."
 
-    print(f"[SendMessage] 📨 {platform} → {receiver}: {message_text[:40]}")
+    print(f"[SendMessage] {platform} -> {receiver}: {message_text[:40]}")
     if player:
         player.write_log(f"[msg] Sending to {receiver} via {platform}...")
 
@@ -271,7 +279,7 @@ def send_message(
     else:
         result = _send_generic(platform, receiver, message_text)
 
-    print(f"[SendMessage] ✅ {result}")
+    print(f"[SendMessage] {result}")
     if player:
         player.write_log(f"[msg] {result}")
 

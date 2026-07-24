@@ -227,6 +227,10 @@ class JarvisLive:
         self.ui.on_text_command = self._on_text_command
 
     def _on_text_command(self, text: str):
+        if self._is_speaking or getattr(self, "is_busy", False):
+            self.ui.write_log("SYS: JARVIS is currently busy with a task. Please wait for it to complete.")
+            return
+
         # Zero-Latency Local Command Router
         import re
         txt = text.lower().strip()
@@ -243,6 +247,16 @@ class JarvisLive:
         elif re.match(r"^(close|kill)\s*(?:browser|chrome|edge)$", txt):
             from actions.computer_settings import computer_settings
             computer_settings(parameters={"action": "kill_app", "app_name": "browser"}, response=None, player=self.ui)
+            return
+        elif re.match(r"^(disconnect|quit|exit|stop|close jarvis)[.!?]*$", txt):
+            self.speak("Disconnecting. Goodbye sir.")
+            def _shutdown():
+                import time
+                time.sleep(2.0)
+                import os
+                os._exit(0)
+            import threading
+            threading.Thread(target=_shutdown, daemon=True).start()
             return
 
         # Context Injection via Vector DB
@@ -502,7 +516,7 @@ class JarvisLive:
                 if hasattr(self, 'ui') and hasattr(self.ui, 'set_mic_level'):
                     self.ui.set_mic_level(vol)
 
-            if not getattr(self.ui, 'muted', False) and not getattr(self, 'is_busy', False):
+            if not getattr(self.ui, 'muted', False) and not getattr(self, 'is_busy', False) and not jarvis_speaking:
                 data = indata.tobytes()
                 loop.call_soon_threadsafe(_enqueue_safely, data)
 
@@ -549,12 +563,9 @@ class JarvisLive:
                                 self.last_input_time = time.time()
 
                         if sc.turn_complete:
-                            self.set_speaking(False)
-                            
-                            # Clear audio queue to stop playback immediately if interrupted
-                            while not self.audio_in_queue.empty():
-                                try: self.audio_in_queue.get_nowait()
-                                except: pass
+                            # Keep speaking state True while there is still audio in queue playing
+                            if self.audio_in_queue and self.audio_in_queue.empty():
+                                self.set_speaking(False)
 
                             full_in = " ".join(in_buf).strip()
                             if full_in:
@@ -589,6 +600,9 @@ class JarvisLive:
                         self.ui.set_state("LISTENING")
 
         except Exception as e:
+            if "1008" in str(e) or "GoAway" in str(e):
+                print("[JARVIS] 🔄 Session limit reached (15m). Closing to reconnect quietly...")
+                return
             print(f"[JARVIS] ❌ Recv: {e}")
             traceback.print_exc()
             raise

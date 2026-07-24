@@ -28,7 +28,7 @@ BASE_DIR           = get_base_dir()
 API_CONFIG_PATH    = BASE_DIR / "config" / "api_keys.json"
 DESKTOP            = Path.home() / "Desktop"
 MAX_BUILD_ATTEMPTS = 3
-GEMINI_MODEL       = "gemini-3.5-flash"
+GEMINI_MODEL       = "gemini-3.1-flash-lite"
 
 
 def _get_api_key() -> str:
@@ -92,6 +92,12 @@ def _read_file(file_path: str) -> tuple[str, str]:
     if not p.exists():
         return "", f"File not found: {file_path}"
     try:
+        if p.suffix.lower() == '.pdf':
+            import PyPDF2
+            with open(p, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                text = "\n".join(page.extract_text() or "" for page in reader.pages)
+            return text, ""
         return p.read_text(encoding="utf-8"), ""
     except Exception as e:
         return "", f"Could not read file: {e}"
@@ -336,7 +342,7 @@ def _edit_action(file_path, instruction, player) -> str:
     if player:
         player.write_log("[Code] Editing file...")
 
-    model  = _get_gemini()
+    model  = _get_model()
     prompt = f"""You are an expert code editor.
 Apply the following change to the code below.
 Return ONLY the complete updated code — no explanation, no markdown, no backticks.
@@ -370,7 +376,7 @@ def _explain_action(file_path, code, player) -> str:
     if player:
         player.write_log("[Code] Analyzing code...")
 
-    model  = _get_gemini()
+    model  = _get_model()
     prompt = f"""Explain what this code does in simple, clear language.
 Focus on: what it does, how it works, and any important details.
 Be concise — 3 to 6 sentences maximum.
@@ -411,7 +417,7 @@ def _optimize_action(file_path, code, language, output_path, player) -> str:
         player.write_log("[Code] Optimizing code...")
 
     lang  = language or "python"
-    model = _get_gemini()
+    model = _get_model()
 
     prompt = f"""You are an expert {lang} developer and code reviewer.
 Optimize the following code for:
@@ -506,7 +512,7 @@ Be specific and actionable. If you see an error message, quote it exactly."""
         ]
 
         response = client.models.generate_content(
-            model="gemini-3.5-flash",
+            model="gemini-3.1-flash-lite",
             contents=contents,
         )
 

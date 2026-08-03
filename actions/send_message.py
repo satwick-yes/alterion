@@ -14,11 +14,11 @@ def _open_app(app_name: str) -> bool:
     """Opens an app via Windows search."""
     try:
         pyautogui.press("win")
-        time.sleep(0.4)
-        pyautogui.write(app_name, interval=0.04)
-        time.sleep(0.5)
+        time.sleep(1.0)
+        pyautogui.write(app_name, interval=0.08)
+        time.sleep(1.5)
         pyautogui.press("enter")
-        time.sleep(2.0)  
+        time.sleep(3.5)  
         return True
     except Exception as e:
         print(f"[SendMessage] Could not open {app_name}: {e}")
@@ -30,25 +30,31 @@ def _search_contact(contact: str, platform: str):
     Searches for a contact inside the messaging app.
     Uses Ctrl+F (universal search shortcut) then types contact name.
     """
-    time.sleep(0.5)
+    time.sleep(1.0)
     pyautogui.hotkey("ctrl", "f")
-    time.sleep(0.4)
+    time.sleep(1.0)
     pyautogui.hotkey("ctrl", "a")
-    pyautogui.write(contact, interval=0.04)
-    time.sleep(0.8)
+    time.sleep(0.5)
+    pyautogui.press("backspace")
+    time.sleep(0.5)
+    pyautogui.write(contact, interval=0.08)
+    time.sleep(2.0)
     pyautogui.press("enter")
-    time.sleep(0.6)
+    time.sleep(1.5)
 
 
 def _type_and_send(message: str):
     """Types message and sends it."""
     pyautogui.press("tab")
-    time.sleep(0.2)
+    time.sleep(0.5)
     pyautogui.hotkey("ctrl", "a")
-    pyautogui.write(message, interval=0.03)
-    time.sleep(0.2)
-    pyautogui.press("enter")
     time.sleep(0.3)
+    pyautogui.press("backspace")
+    time.sleep(0.3)
+    pyautogui.write(message, interval=0.05)
+    time.sleep(1.0)
+    pyautogui.press("enter")
+    time.sleep(1.0)
 
 
 def _send_whatsapp(receiver: str, message: str) -> str:
@@ -63,26 +69,29 @@ def _send_whatsapp(receiver: str, message: str) -> str:
         if not _open_app("WhatsApp"):
             return "Could not open WhatsApp."
 
-        time.sleep(2.0)  
+        time.sleep(3.0)  
 
         pyautogui.hotkey("ctrl", "f")
-        time.sleep(0.5)
+        time.sleep(1.0)
         pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.5)
         pyautogui.press("backspace")
-        pyautogui.write(receiver, interval=0.04)
-        time.sleep(2.5)  # Wait for search results
+        time.sleep(0.5)
+        pyautogui.write(receiver, interval=0.08)
+        time.sleep(4.0)  # Wait for search results
 
         # Note: Do NOT press "tab" here because in modern WhatsApp Desktop,
         # tab focuses the "All" filter pill. Pressing "down" directly
         # navigates to the first contact search result in the list.
         pyautogui.press("down")
-        time.sleep(0.4)
+        time.sleep(1.0)
         pyautogui.press("enter")
-        time.sleep(2.0)  # Wait for chat to open and focus text area
+        time.sleep(3.0)  # Wait for chat to open and focus text area
 
-        pyautogui.write(message, interval=0.03)
-        time.sleep(0.5)
+        pyautogui.write(message, interval=0.05)
+        time.sleep(1.0)
         pyautogui.press("enter")
+        time.sleep(1.0)
 
         return f"Message sent to {receiver} via WhatsApp."
 
@@ -130,35 +139,35 @@ def _send_instagram(receiver: str, message: str, browser_param: str = "") -> str
                     break
 
         browser_obj.open("https://www.instagram.com/direct/new/")
-        time.sleep(3.5)
+        time.sleep(5.0)
 
         is_top_chat = receiver.lower() in ["top chat", "recent chat", "first chat", "latest chat"]
         
         if not is_top_chat:
-            pyautogui.write(receiver, interval=0.05)
-            time.sleep(2.0)
+            pyautogui.write(receiver, interval=0.08)
+            time.sleep(4.0)
 
         # Tab to the first user in the list (search result or top suggested)
         pyautogui.press("tab")
-        time.sleep(0.3)
+        time.sleep(1.0)
         pyautogui.press("space")
-        time.sleep(0.5)
+        time.sleep(1.0)
 
         # Navigate backwards to the "Next"/"Chat" button in the header
         # Shift+Tab 1: Back to Search Input
         pyautogui.hotkey("shift", "tab")
-        time.sleep(0.3)
+        time.sleep(0.8)
         # Shift+Tab 2: Back to Next/Chat Button
         pyautogui.hotkey("shift", "tab")
-        time.sleep(0.3)
+        time.sleep(0.8)
         
         # Press enter to open the chat
         pyautogui.press("enter")
-        time.sleep(2.5)
+        time.sleep(4.0)
 
         # Type and send the message
-        pyautogui.write(message, interval=0.04)
-        time.sleep(0.2)
+        pyautogui.write(message, interval=0.05)
+        time.sleep(1.0)
         pyautogui.press("enter")
 
         return f"Message sent to {receiver} via Instagram."
@@ -172,17 +181,21 @@ def _send_telegram(receiver: str, message: str) -> str:
         if not _open_app("Telegram"):
             return "Could not open Telegram."
 
-        time.sleep(1.5)
+        time.sleep(2.5)
 
         pyautogui.hotkey("ctrl", "f")
-        time.sleep(0.4)
-        pyautogui.write(receiver, interval=0.04)
         time.sleep(1.0)
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.5)
+        pyautogui.press("backspace")
+        time.sleep(0.5)
+        pyautogui.write(receiver, interval=0.08)
+        time.sleep(3.0)
         pyautogui.press("enter")
-        time.sleep(0.8)
+        time.sleep(1.5)
 
-        pyautogui.write(message, interval=0.03)
-        time.sleep(0.2)
+        pyautogui.write(message, interval=0.05)
+        time.sleep(1.0)
         pyautogui.press("enter")
 
         return f"Message sent to {receiver} via Telegram."
@@ -202,15 +215,19 @@ def _send_generic(platform: str, receiver: str, message: str) -> str:
         if not _open_app(platform):
             return f"Could not open {platform}."
 
-        time.sleep(1.5)
+        time.sleep(2.5)
         pyautogui.hotkey("ctrl", "f")
-        time.sleep(0.4)
-        pyautogui.write(receiver, interval=0.04)
         time.sleep(1.0)
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.5)
+        pyautogui.press("backspace")
+        time.sleep(0.5)
+        pyautogui.write(receiver, interval=0.08)
+        time.sleep(3.0)
         pyautogui.press("enter")
-        time.sleep(0.8)
-        pyautogui.write(message, interval=0.03)
-        time.sleep(0.2)
+        time.sleep(1.5)
+        pyautogui.write(message, interval=0.05)
+        time.sleep(1.0)
         pyautogui.press("enter")
 
         return f"Message sent to {receiver} via {platform}."

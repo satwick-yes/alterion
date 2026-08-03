@@ -5,8 +5,8 @@
       "updated": "2026-07-06"
     },
     "name": {
-      "value": "Satwick Shaw",
-      "updated": "2026-07-07"
+      "value": "Ali",
+      "updated": "2026-08-03"
     },
     "language": {
       "value": "English",
@@ -39,9 +39,18 @@
     "conference_presentation": {
       "value": "presentation for IEEE conference",
       "updated": "2026-07-24"
+    },
+    "mathematical_model": {
+      "value": "Developing a mathematical model for low-frequency magnetic levitation and high-frequency applications",
+      "updated": "2026-07-25"
     }
   },
-  "relationships": {},
+  "relationships": {
+    "father": {
+      "value": "referred to as 'papa'",
+      "updated": "2026-08-03"
+    }
+  },
   "wishes": {
     "conference_assistance": {
       "value": "wants assistance analyzing documents",
@@ -64,6 +73,10 @@
     "upload_documents": {
       "value": "will upload research paper and presentation",
       "updated": "2026-07-24"
+    },
+    "uses_whatsapp": {
+      "value": "communicates via WhatsApp",
+      "updated": "2026-08-03"
     }
   }
 }

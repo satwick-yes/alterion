@@ -1335,13 +1335,21 @@ class MainWindow(QMainWindow):
                 QPushButton:hover {{ background: #001f10; }}
             """)
 
+    @property
+    def current_file(self) -> str | None:
+        return getattr(self, "_current_file", None)
+
     def _send(self):
         txt = self._input.text().strip()
         if not txt: return
         self._input.clear()
         self._log.append_log(f"You: {txt}")
         if self.on_text_command:
-            threading.Thread(target=self.on_text_command, args=(txt,), daemon=True).start()
+            cmd = txt
+            active_file = getattr(self, "_current_file", None)
+            if active_file and "[ACTIVE_FILE:" not in txt:
+                cmd = f"[ACTIVE_FILE: {active_file}] {txt}"
+            threading.Thread(target=self.on_text_command, args=(cmd,), daemon=True).start()
 
     def _apply_state(self, state: str):
         self.hud.state    = state

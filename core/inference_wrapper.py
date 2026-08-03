@@ -132,28 +132,35 @@ class InferenceWrapper:
         try:
             from google import genai
             client = genai.Client(api_key=self.gemini_key)
-            # Remove "models/" prefix for google-genai SDK
-            response = client.models.embed_content(
-                model="text-embedding-004",
-                contents=text
-            )
-            embeddings = response.embeddings
+            try:
+                response = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=text
+                )
+            except Exception:
+                response = client.models.embed_content(
+                    model="models/text-embedding-004",
+                    contents=text
+                )
+            embeddings = getattr(response, "embeddings", None)
             if embeddings and len(embeddings) > 0:
                 return embeddings[0].values
             raise ValueError("No embeddings returned from API")
         except Exception as e:
-            logger.error(f"Gemini embedding failed: {e}. Trying google-generativeai fallback.")
+            logger.warning(f"Gemini embedding failed: {e}. Trying google-generativeai fallback.")
             try:
                 import google.generativeai as old_genai
                 old_genai.configure(api_key=self.gemini_key)
                 response = old_genai.embed_content(
-                    model="models/embedding-001",
-                    content=text  # Singular parameter for google-generativeai
+                    model="models/text-embedding-004",
+                    content=text
                 )
-                return response.get("embedding", [])
+                emb = response.get("embedding", [])
+                if emb:
+                    return emb
+                raise ValueError("Empty fallback embedding")
             except Exception as e2:
-                logger.error(f"Fallback embedding failed: {e2}")
-                # Return emulated embedding to ensure local tasks and tests don't crash
+                logger.warning(f"Fallback embedding failed: {e2}. Using emulated embedding.")
                 return self._emulated_embedding(text)
 
     # --- GEMINI IMPLEMENTATIONS ---

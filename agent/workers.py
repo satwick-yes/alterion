@@ -99,6 +99,7 @@ class WorkerManager:
 
     @staticmethod
     def _run_researcher(task, args, player, speak, async_callback=None):
+        import re
         if "weather" in task:
             return weather_action(parameters={"city": task}, player=player)
         elif "flight" in task:
@@ -107,6 +108,9 @@ class WorkerManager:
             return youtube_video(parameters={"action": "play", "query": task}, response=None, player=player)
         elif "joke" in task or "api" in task:
             return WorkerManager._run_in_background(free_api_query, {"parameters": {"query_description": task}, "player": player, "session_memory": None}, async_callback, "Researcher-API")
+        elif any(k in task for k in ["paper", "pdf", "uploaded", "document", "file"]) or re.search(r'\b[\w\-. ]+\.(pdf|docx|txt|md|csv|pptx)\b', task):
+            # Route document analysis requests to Creator Companion (File Processor)
+            return WorkerManager._run_creator(task, args, player, speak, async_callback)
         else:
             return WorkerManager._run_in_background(web_search_action, {"parameters": {"query": task}, "player": player}, async_callback, "Researcher-WebSearch")
 
@@ -131,9 +135,10 @@ class WorkerManager:
                 receiver = task
                 message_text = task
             return send_message(parameters={"receiver": receiver, "message_text": message_text, "platform": "WhatsApp"}, response=None, player=player, session_memory=None)
-        elif "presentation" in task or "powerpoint" in task:
+        elif ("presentation" in task or "powerpoint" in task) and any(w in task for w in ["create", "make", "generate", "build", "design", "slides", "ppt"]):
             return WorkerManager._run_in_background(create_presentation, {"parameters": {"topic": task, "slides": []}, "player": player}, async_callback, "Creator-PPT")
-        elif "report" in task or "pdf" in task:
+        elif ("report" in task or "pdf" in task) and any(w in task for w in ["create", "make", "generate", "build", "write"]):
             return WorkerManager._run_in_background(create_report, {"parameters": {"title": task, "sections": []}, "player": player}, async_callback, "Creator-PDF")
         else:
-            return WorkerManager._run_in_background(file_processor, {"parameters": {"action": "summarize", "instruction": task, "file_path": getattr(player, "current_file", None)}, "player": player, "speak": speak}, async_callback, "Creator-File")
+            file_path = getattr(player, "current_file", None) or getattr(player, "_current_file", None)
+            return WorkerManager._run_in_background(file_processor, {"parameters": {"action": "auto", "instruction": task, "file_path": file_path}, "player": player, "speak": speak}, async_callback, "Creator-File")

@@ -25,20 +25,19 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
-import google.generativeai as genai
-
-
-def _get_api_key() -> str:
-    config_path = Path(__file__).resolve().parent.parent / "config" / "api_keys.json"
-    with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)["gemini_api_key"]
-
+class _GenAIWrapper:
+    def generate_content(self, prompt: str):
+        from core.inference_wrapper import inference_client
+        res = inference_client.generate_text(
+            prompt=prompt,
+            system_instruction="You are JARVIS, an expert AI assistant."
+        )
+        class Response:
+            text = res
+        return Response()
 
 def _gemini_client():
-    genai.configure(api_key=_get_api_key())
-    return genai.GenerativeModel("gemini-3.1-flash-lite")
+    return _GenAIWrapper()
 
 
 def _detect_type(path: Path) -> str:
@@ -192,7 +191,9 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
                 return ""
         return text[:max_chars]
 
-    if action in ("summarize", "extract_text", "translate_hint", "analyze", "reformat"):
+    instruction = (params.get("instruction") or "").strip()
+    
+    if action in ("summarize", "extract_text", "translate_hint", "analyze", "reformat", "qa", "questions", "ask_questions") or instruction or action not in ("info", "to_word"):
         text = _extract_pdf_text()
         if not text.strip():
             return "Could not extract text from PDF (may be scanned/image-based)."
@@ -202,23 +203,37 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
             out.write_text(text, encoding="utf-8")
             return f"Text extracted ({len(text)} chars). Saved: {out.name}"
 
-        prompt_map = {
-            "summarize":      f"Summarize this PDF document concisely:\n\n{text}",
-            "analyze":        f"Analyze this document thoroughly:\n\n{text}",
-            "translate_hint": f"What language is this document in and what does it say? Summarize:\n\n{text}",
-            "reformat":       f"Reformat this text cleanly with proper structure:\n\n{text}",
-        }
+        if instruction:
+            prompt = (
+                f"You are JARVIS, an expert AI research assistant.\n"
+                f"The user uploaded this research paper / PDF document: '{path.name}'\n\n"
+                f"User Instruction:\n{instruction}\n\n"
+                f"Document Content:\n{text[:40000]}\n\n"
+                f"Provide a clear, detailed, professional response addressing the user's instruction. "
+                f"If the user asks for questions or presentation preparation, generate 4-6 insightful, highly relevant questions and key technical points."
+            )
+        else:
+            prompt_map = {
+                "summarize":      f"Summarize this PDF document concisely:\n\n{text[:40000]}",
+                "analyze":        f"Analyze this document thoroughly:\n\n{text[:40000]}",
+                "translate_hint": f"What language is this document in and what does it say? Summarize:\n\n{text[:10000]}",
+                "reformat":       f"Reformat this text cleanly with proper structure:\n\n{text[:40000]}",
+                "questions":      f"Generate 5 insightful research and technical questions regarding this paper for presentation preparation:\n\n{text[:40000]}",
+                "ask_questions":  f"Generate 5 insightful research and technical questions regarding this paper for presentation preparation:\n\n{text[:40000]}",
+            }
+            prompt = prompt_map.get(action, f"Analyze this document:\n\n{text[:40000]}")
+
         try:
             model    = _gemini_client()
-            response = model.generate_content(prompt_map.get(action, f"Analyze:\n\n{text}"))
+            response = model.generate_content(prompt)
             result   = response.text.strip()
-            if len(result) > 600 and params.get("save", True):
-                out = _output_path(path, action, ".txt")
+            if len(result) > 1000 and params.get("save", False):
+                out = _output_path(path, action or "analysis", ".txt")
                 out.write_text(result, encoding="utf-8")
-                return f"{result[:400]}...\n\nFull result saved: {out.name}"
+                return f"{result}\n\n[Full result saved: {out.name}]"
             return result
         except Exception as e:
-            return f"AI analysis failed: {e}"
+            return f"AI processing failed: {e}"
 
     if action == "info":
         try:
@@ -282,25 +297,29 @@ def _process_text_doc(path: Path, file_type: str, action: str,
             return f"Text extracted. Saved: {out.name}"
         return content[:2000]
 
-    instruction = params.get("instruction", "")
-    prompt_map  = {
-        "summarize":  f"Summarize this document concisely:\n\n{content[:40000]}",
-        "analyze":    f"Analyze this document:\n\n{content[:40000]}",
-        "reformat":   f"Reformat this text with clean structure, proper headings and paragraphs:\n\n{content[:40000]}",
-        "fix":        f"Fix grammar, spelling and style issues in this text:\n\n{content[:40000]}",
-        "translate_hint": f"What language is this and what does it say? Summarize:\n\n{content[:10000]}",
-        "to_bullet":  f"Convert this text into a clear bullet-point summary:\n\n{content[:40000]}",
-        "custom":     f"{instruction}\n\n{content[:40000]}",
-    }
-
-    if action not in prompt_map:
-
-        action  = "custom"
-        instruction = action
+    instruction = (params.get("instruction") or "").strip()
+    if instruction:
+        prompt = (
+            f"You are JARVIS, an expert AI research assistant.\n"
+            f"The user uploaded this document: '{path.name}'\n\n"
+            f"User Instruction:\n{instruction}\n\n"
+            f"Document Content:\n{content[:40000]}\n\n"
+            f"Provide a clear, detailed, professional response addressing the user's instruction."
+        )
+    else:
+        prompt_map  = {
+            "summarize":  f"Summarize this document concisely:\n\n{content[:40000]}",
+            "analyze":    f"Analyze this document:\n\n{content[:40000]}",
+            "reformat":   f"Reformat this text with clean structure, proper headings and paragraphs:\n\n{content[:40000]}",
+            "fix":        f"Fix grammar, spelling and style issues in this text:\n\n{content[:40000]}",
+            "translate_hint": f"What language is this and what does it say? Summarize:\n\n{content[:10000]}",
+            "to_bullet":  f"Convert this text into a clear bullet-point summary:\n\n{content[:40000]}",
+        }
+        prompt = prompt_map.get(action, f"Analyze this document:\n\n{content[:40000]}")
 
     try:
         model    = _gemini_client()
-        response = model.generate_content(prompt_map[action])
+        response = model.generate_content(prompt)
         result   = response.text.strip()
         if len(result) > 600 and params.get("save", True):
             out = _output_path(path, action, ".txt")
@@ -782,7 +801,20 @@ def _process_pptx(path: Path, action: str, params: dict, speak=None) -> str:
     return f"Unknown PPTX action: '{action}'. Try: summarize, extract_text, analyze"
 
 def file_processor(parameters: dict, player=None, speak=None) -> str:
-    file_path_str = parameters.get("file_path", "").strip()
+    file_path_str = (parameters.get("file_path") or "").strip()
+    
+    # Fallback to player current_file or _current_file if not explicitly passed
+    if not file_path_str and player:
+        file_path_str = getattr(player, "current_file", None) or getattr(player, "_current_file", None) or ""
+    
+    # Fallback to active file regex in instruction/task
+    instruction = (parameters.get("instruction") or "").strip()
+    if not file_path_str and "[ACTIVE_FILE:" in instruction:
+        import re
+        m = re.search(r'\[ACTIVE_FILE:\s*([^\]]+)\]', instruction)
+        if m:
+            file_path_str = m.group(1).strip()
+
     if not file_path_str:
         return "No file path provided."
 

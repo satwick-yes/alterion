@@ -600,8 +600,9 @@ class JarvisLive:
                         self.ui.set_state("LISTENING")
 
         except Exception as e:
-            if "1008" in str(e) or "GoAway" in str(e):
-                print("[JARVIS] 🔄 Session limit reached (15m). Closing to reconnect quietly...")
+            err_str = str(e)
+            if any(code in err_str for code in ["1008", "1006", "1011", "GoAway", "keepalive", "abnormal closure"]):
+                print(f"[JARVIS] 🔄 Live session reset ({err_str[:60]}). Reconnecting cleanly...")
                 return
             print(f"[JARVIS] ❌ Recv: {e}")
             traceback.print_exc()

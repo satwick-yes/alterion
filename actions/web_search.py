@@ -32,19 +32,24 @@ def _inference_search(query: str) -> str:
 
 
 def _ddg_search(query: str, max_results: int = 6) -> list[dict]:
-    try:
-        from ddgs import DDGS
-    except ImportError:
-        from duckduckgo_search import DDGS
-
+    import warnings
     results = []
-    with DDGS() as ddgs:
-        for r in ddgs.text(query, max_results=max_results):
-            results.append({
-                "title":   r.get("title",  ""),
-                "snippet": r.get("body",   ""),
-                "url":     r.get("href",   ""),
-            })
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            from duckduckgo_search import DDGS
+            with DDGS() as ddgs:
+                for r in ddgs.text(query, max_results=max_results):
+                    results.append({
+                        "title":   r.get("title",  ""),
+                        "snippet": r.get("body",   ""),
+                        "url":     r.get("href",   ""),
+                    })
+        except ImportError as e:
+            print(f"[WebSearch] ⚠️ duckduckgo_search import failed: {e}")
+            return []
+        except Exception as e:
+            print(f"[WebSearch] ⚠️ DDG search failed: {e}")
     return results
 
 

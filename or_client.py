@@ -34,9 +34,10 @@ def _load_api_key() -> str:
         raise RuntimeError(f"Failed to load OpenRouter API key: {e}")
 
 TEXT_MODELS: list[str] = [
+    "openrouter/free",
+    "inclusionai/ling-3.0-flash:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
     "google/gemma-4-31b-it:free",
-    "openai/gpt-oss-20b:free",
-    "poolside/laguna-s-2.1:free",
     "nvidia/nemotron-3-nano-30b-a3b:free"
 ]
 
@@ -171,6 +172,17 @@ class OpenRouterClient:
             if attempts >= 6:
                 logger.info("[OpenRouter] Max fallback attempts (6) reached. Aborting.")
                 break
+
+        # Secondary provider fallback (Groq)
+        try:
+            from core.inference_wrapper import inference_client
+            if inference_client.groq_key:
+                logger.info("[OpenRouter] Pool exhausted. Falling back to Groq API...")
+                user_content = next((m.get("content","") for m in reversed(messages) if m.get("role") == "user"), "")
+                sys_content = next((m.get("content","") for m in messages if m.get("role") == "system"), "")
+                return inference_client.generate_text(prompt=user_content, system_instruction=sys_content, provider="groq", max_tokens=max_tokens)
+        except Exception as fallback_err:
+            logger.warning(f"[OpenRouter] Groq fallback failed: {fallback_err}")
 
         raise RuntimeError(
             "[OpenRouter] All models failed or are rate-limited. "

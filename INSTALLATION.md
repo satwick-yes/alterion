@@ -32,5 +32,10 @@ You have a few options for starting Jarvis, depending on your needs:
 - **Background Mode (Recommended)**: Double-click `launchers\start_jarvis.bat`. Jarvis will run silently in the background without keeping a console window open.
 - **Console Mode (For Debugging)**: Double-click `launchers\jarvis_console.bat`. This will open a visible command prompt so you can see the logs and actions as Jarvis performs them.
 ## Troubleshooting
+- **Smart App Control / Windows Defender blocking the setup file**: Because you downloaded these files from the internet, Windows might block the `.bat` scripts. To fix this:
+  1. Right-click the `setup.bat` (or any `.bat` file you're trying to run).
+  2. Select **Properties**.
+  3. At the bottom of the General tab, look for a Security section and check the **Unblock** box.
+  4. Click **Apply** and **OK**, then try running the file again.
 - If you encounter issues during `install_dependencies.bat`, ensure you have the latest `pip` installed by running `python -m pip install --upgrade pip` in your command prompt.
 - Make sure you are running the setup scripts from the main `jarvis ai` folder.

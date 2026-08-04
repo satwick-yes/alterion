@@ -26,8 +26,8 @@ echo [2/4] Installing Python Backend Dependencies...
 :: Ensure pip is up to date
 python -m pip install --upgrade pip
 
-:: Install specific pytorch version first to bypass Windows long-path limits
-python -m pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+:: Install pytorch to bypass Windows long-path limits
+python -m pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 :: Install the rest of the dependencies
 python -m pip install -r requirements.txt
@@ -43,8 +43,12 @@ if exist "frontend" (
 )
 
 echo.
-echo [4/4] Setting up Playwright Browsers...
+echo [4/5] Setting up Playwright Browsers...
 python -m playwright install
+
+echo.
+echo [5/5] Configuring API Keys...
+python setup\setup_keys.py
 
 echo.
 echo ========================================================

@@ -258,6 +258,11 @@ def send_message(
     # Clean up quotes and common LLM phrasing mistakes
     receiver = receiver.strip(' "\'')
     message_text = message_text.strip(' "\'')
+    
+    # Sometimes the LLM hallucinates the prompt into the message, e.g. "hello with the content: 'hello'"
+    message_text = re.sub(r"^.*?with the content:\s*['\"]?(.*?)['\"]?$", r"\1", message_text, flags=re.IGNORECASE).strip()
+    message_text = re.sub(r"^.*?saying(?:\s+that)?:\s*['\"]?(.*?)['\"]?$", r"\1", message_text, flags=re.IGNORECASE).strip()
+
     receiver = re.sub(r'(?i)\s+(on|via)\s+(whatsapp|telegram|instagram|discord|messenger|skype|signal).*$', '', receiver).strip()
     receiver = re.sub(r'(?i)^(to|for|message|contact)\s+', '', receiver).strip()
     platform     = params.get("platform", "whatsapp").strip().lower()

@@ -40,9 +40,19 @@ def setup_api_keys():
     if openai_key:
         keys["openai_api_key"] = openai_key
         
+    # Prompt for NVIDIA API Key
+    print(f"\nCurrent NVIDIA API Key: {keys.get('nvidia_api_key', 'Not set')}")
+    nvidia_key = input("Enter your new NVIDIA API Key (leave blank to keep current): ").strip()
+    if nvidia_key:
+        keys["nvidia_api_key"] = nvidia_key
+
+    # Prompt for Groq API Key
+    print(f"\nCurrent Groq API Key: {keys.get('groq_api_key', 'Not set')}")
+    groq_key = input("Enter your new Groq API Key (leave blank to keep current): ").strip()
+    if groq_key:
+        keys["groq_api_key"] = groq_key
+        
     # Keep placeholders for others if they don't exist
-    if "nvidia_api_key" not in keys:
-        keys["nvidia_api_key"] = ""
     if "os_system" not in keys:
         keys["os_system"] = "Windows" # Assuming default Windows
 

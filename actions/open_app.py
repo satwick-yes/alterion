@@ -190,6 +190,12 @@ def open_app(
     session_memory=None,
 ) -> str:
     app_name = (parameters or {}).get("app_name", "").strip()
+    
+    import re
+    # Clean up conversational prefixes like "the application called " or "the app "
+    app_name = re.sub(r'(?i)^(the\s+)?(application|app|program|software)\s+(called|named|known as)\s+', '', app_name).strip()
+    app_name = re.sub(r'(?i)^(the\s+)?(application|app|program|software)\s+', '', app_name).strip()
+    
     url = (parameters or {}).get("url", "").strip()
 
     if not app_name:

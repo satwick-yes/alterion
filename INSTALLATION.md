@@ -7,13 +7,16 @@ Welcome to the Jarvis AI setup! Follow these steps to install and start Jarvis o
 2. **Git** (optional but recommended): To clone the repository.
 
 ## Step 1: Install Dependencies & Setup
-You can run the entire installation and API key configuration in one go by using the `entire_setup.bat` script:
-1. Double-click the `setup\entire_setup.bat` file.
-2. Wait for the installer to finish downloading all the required packages from `requirements.txt`.
-3. It will then automatically prompt you to enter your API keys.
+You can run the entire installation and API key configuration in one go by using the `install.py` script:
+1. Open your terminal or command prompt in the Jarvis folder.
+2. Run the following command:
+   ```cmd
+   python install.py
+   ```
+3. Wait for the installer to finish downloading all the required packages from `requirements.txt`.
+4. It will then automatically prompt you to enter your API keys.
 
-Alternatively, you can run them manually:
-- To just install dependencies: run `setup\install_dependencies.bat`
+Alternatively, you can configure keys manually:
 - To just configure keys: run `python setup\setup_keys.py`
 
 ## Step 2: Configure API Keys

@@ -1,5 +1,5 @@
 # actions/open_app.py
-# Jarvis — Cross-Platform App Launcher
+# Vani — Cross-Platform App Launcher
 
 import time
 import subprocess
@@ -83,7 +83,21 @@ def _is_running(app_name: str) -> bool:
 def _launch_windows(app_name: str, url: str = "") -> bool:
     if url:
         try:
-            subprocess.run(["cmd", "/c", "start", "", app_name, url], timeout=5)
+            cmd = ["cmd", "/c", "start", ""]
+            if "private" in app_name.lower() or "incognito" in app_name.lower():
+                if "chrome" in app_name.lower():
+                    cmd.extend(["chrome", "-incognito", url])
+                elif "edge" in app_name.lower():
+                    cmd.extend(["msedge", "-inprivate", url])
+                elif "firefox" in app_name.lower():
+                    cmd.extend(["firefox", "-private-window", url])
+                elif "brave" in app_name.lower():
+                    cmd.extend(["brave", "-incognito", url])
+                else:
+                    cmd.extend([app_name, url])
+            else:
+                cmd.extend([app_name, url])
+            subprocess.run(cmd, timeout=5)
             return True
         except Exception:
             pass
@@ -211,7 +225,10 @@ def open_app(
     print(f"[open_app] 🚀 Launching: {app_name} → {normalized} ({system}) with URL: {url}")
 
     if player:
-        player.write_log(f"[open_app] {app_name}")
+        log_msg = f"[open_app] {app_name}"
+        if url:
+            log_msg += f" {url}"
+        player.write_log(log_msg)
 
     try:
         success = launcher(normalized, url)

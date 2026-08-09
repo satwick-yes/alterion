@@ -34,12 +34,17 @@ class IntegrationGateway:
             ],
             "Developer Agent": [
                 "code_helper", "dev_agent", "system_shell", "file_controller", "agent_task", "virtual_hand_control",
-                "delegate_to_developer"
+                "delegate_to_developer", "save_file", "find_file"
             ],
             "Creator Agent": [
                 "file_processor", "create_presentation", "create_report", 
                 "generate_image", "send_message", "reminder", "virtual_hand_control",
-                "delegate_to_creator"
+                "delegate_to_creator", "save_file", "find_file"
+            ],
+            "LLM Brain Manager": [
+                "delegate_to_gemini_brain", "delegate_to_openrouter_brain",
+                "delegate_to_nvidia_brain", "delegate_to_openai_brain",
+                "delegate_to_groq_brain", "delegate_to_deepseek_brain"
             ]
         }
 
@@ -94,7 +99,7 @@ class IntegrationGateway:
             
         allowed_tools = self.permissions.get(companion_name, [])
         # Always allow system sleep, memory saving, and general free API queries
-        if tool_name in ["go_to_sleep", "save_memory", "shutdown_jarvis", "free_api_query"]:
+        if tool_name in ["go_to_sleep", "save_memory", "shutdown_vani", "free_api_query"]:
             return True
             
         is_allowed = tool_name in allowed_tools

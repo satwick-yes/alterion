@@ -14,7 +14,7 @@ def get_base_dir():
 
 BASE_DIR         = get_base_dir()
 API_CONFIG_PATH  = BASE_DIR / "config" / "api_keys.json"
-PROJECTS_DIR     = Path.home() / "Desktop" / "JarvisProjects"
+PROJECTS_DIR     = Path.home() / "Desktop" / "VaniProjects"
 MAX_FIX_ATTEMPTS = 5
 MODEL_PLANNER    = "gemini-3.1-flash-lite"
 MODEL_WRITER     = "gemini-3.1-flash-lite"
@@ -24,27 +24,29 @@ def _get_api_key() -> str:
         return json.load(f)["gemini_api_key"]
 
 
-class GemmaModel:
-    def __init__(self, model_name: str):
-        self.model_name = model_name
-        
-    def generate_content(self, prompt: str):
-        class Response:
-            def __init__(self, text: str):
-                self.text = text
-        try:
-            from or_client import client
-            res = client.chat(prompt, model=self.model_name)
-            return Response(res)
-        except Exception as e:
-            print(f"[DevAgent] ⚠️ Gemma failed, falling back to Gemini: {e}")
-            import google.generativeai as genai
-            genai.configure(api_key=_get_api_key())
-            m = genai.GenerativeModel("gemini-3.1-flash-lite")
-            return m.generate_content(prompt)
-
 def _get_model(model_name: str):
-    return GemmaModel("google/gemma-4-31b-it:free")
+    class AIModel:
+        def generate_content(self, prompt: str):
+            class Response:
+                def __init__(self, text: str):
+                    self.text = text
+            try:
+                import sys
+                from pathlib import Path
+                base = Path(__file__).resolve().parent.parent
+                if str(base) not in sys.path:
+                    sys.path.append(str(base))
+                from core.inference_wrapper import InferenceWrapper
+                wrapper = InferenceWrapper()
+                res = wrapper.generate_text(prompt=prompt, provider="deepseek")
+                return Response(res)
+            except Exception as e:
+                print(f"[DevAgent] ⚠️ DeepSeek failed, falling back to Gemini: {e}")
+                from core.inference_wrapper import InferenceWrapper
+                wrapper = InferenceWrapper()
+                res = wrapper.generate_text(prompt=prompt, provider="gemini")
+                return Response(res)
+    return AIModel()
 
 
 def _strip_fences(text: str) -> str:
@@ -148,6 +150,7 @@ Critical rules:
 4. Entry point must be in the files list.
 5. Use relative paths only (e.g. "utils/helpers.py", not absolute paths).
 6. Standard library modules (os, sys, json, etc.) do NOT go in "dependencies".
+7. For websites, use "index.html" as the entry point and "start index.html" as the run_command (or "npx ..." for web frameworks).
 
 JSON:"""
 
@@ -198,10 +201,11 @@ Python-specific rules:
 - For relative imports within the project, use: from utils.helpers import foo  (match the project structure exactly).
 - Do NOT use implicit relative imports (from . import ...) unless it's a proper package with __init__.py.
 - If this is a package subdirectory, create __init__.py files where needed."""
-    elif language.lower() in ("javascript", "typescript", "js", "ts"):
+    elif language.lower() in ("javascript", "typescript", "js", "ts", "html/javascript", "html", "web"):
         lang_rules = """
-JS/TS-specific rules:
+Web/JS-specific rules:
 - Use ES modules (import/export), not CommonJS (require).
+- If it's a frontend web app, ensure all HTML/CSS/JS is cleanly separated but linked properly. Include modern, beautiful CSS styles.
 - Add JSDoc comments for all exported functions.
 - Handle promise rejections with try/catch in async functions."""
 
@@ -309,8 +313,10 @@ def _run_project(run_command: str, project_dir: Path, timeout: int = 30) -> str:
         if parts[0].lower() == "python":
             parts[0] = sys.executable
 
+        is_shell = parts[0].lower() in ("start", "npm", "npx", "npx.cmd", "npm.cmd")
         result = subprocess.run(
-            parts,
+            run_command if is_shell else parts,
+            shell=is_shell,
             capture_output=True, text=True,
             encoding="utf-8", errors="replace",
             timeout=timeout,
@@ -472,7 +478,7 @@ def _build_project(
         if speak: speak(msg)
         return msg
 
-    proj_name    = project_name or plan.get("project_name", "jarvis_project")
+    proj_name    = project_name or plan.get("project_name", "vani_project")
     proj_name    = re.sub(r"[^\w\-]", "_", proj_name)
     project_dir  = PROJECTS_DIR / proj_name
     project_dir.mkdir(parents=True, exist_ok=True)
@@ -597,7 +603,17 @@ def dev_agent(
 ) -> str:
     p            = parameters or {}
     description  = p.get("description", "").strip()
-    language     = p.get("language", "python").strip()
+    if not description:
+        description = p.get("task", "").strip()
+
+    language = p.get("language", "").strip()
+    if not language:
+        desc_lower = description.lower()
+        if any(w in desc_lower for w in ["website", "web", "html", "react", "frontend", "ui"]):
+            language = "html/javascript"
+        else:
+            language = "python"
+            
     project_name = p.get("project_name", "").strip()
     timeout      = int(p.get("timeout", 30))
 

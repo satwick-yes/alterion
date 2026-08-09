@@ -1,82 +1,116 @@
 {
   "identity": {
-    "creator_name": {
-      "value": "Satwick Shaw",
-      "updated": "2026-07-06"
-    },
     "name": {
-      "value": "Ali",
-      "updated": "2026-08-03"
+      "value": "Satvik",
+      "updated": "2026-08-08"
     },
-    "language": {
-      "value": "English",
-      "updated": "2026-07-19"
+    "girlfriend": {
+      "value": "Riya",
+      "updated": "2026-08-09"
+    },
+    "father": {
+      "value": "Parmeshwar Shaw",
+      "updated": "2026-08-09"
+    },
+    "mother": {
+      "value": "Sneh Lata Gupta",
+      "updated": "2026-08-09"
+    },
+    "girlfriend_name": {
+      "value": "Riya",
+      "updated": "2026-08-09"
     }
   },
-  "preferences": {
-    "last_video_platform": {
-      "value": "YouTube",
-      "updated": "2026-07-18"
-    },
-    "last_browser": {
-      "value": "Brave",
-      "updated": "2026-07-18"
-    },
-    "favorite_food": {
-      "value": "biryani",
-      "updated": "2026-07-20"
-    },
-    "default_browser": {
-      "value": "Brave",
-      "updated": "2026-07-22"
-    }
-  },
+  "preferences": {},
   "projects": {
-    "conference_paper": {
-      "value": "research paper for IEEE conference",
-      "updated": "2026-07-24"
+    "unknown_project": {
+      "value": "building something together",
+      "updated": "2026-08-08"
     },
-    "conference_presentation": {
-      "value": "presentation for IEEE conference",
-      "updated": "2026-07-24"
-    },
-    "mathematical_model": {
-      "value": "Developing a mathematical model for low-frequency magnetic levitation and high-frequency applications",
-      "updated": "2026-07-25"
+    "create_docs_file": {
+      "value": "Satvik's answers",
+      "updated": "2026-08-09"
     }
   },
   "relationships": {
-    "father": {
-      "value": "referred to as 'papa'",
-      "updated": "2026-08-03"
+    "user": {
+      "value": "client requesting portfolio website",
+      "updated": "2026-08-06"
+    },
+    "assistant": {
+      "value": "Rio (referred to as Jarvis by user)",
+      "updated": "2026-08-06"
+    },
+    "satyam_shivam": {
+      "value": "good friend",
+      "updated": "2026-08-06"
+    },
+    "Satyam Shivam": {
+      "value": "acquaintance",
+      "updated": "2026-08-06"
+    },
+    "friend_rio": {
+      "value": "close friend, defender",
+      "updated": "2026-08-08"
+    },
+    "rio": {
+      "value": "colleague or partner in a project",
+      "updated": "2026-08-08"
+    },
+    "girlfriend": {
+      "value": "Riya",
+      "updated": "2026-08-09"
+    },
+    "girlfriend_riya": {
+      "value": "girlfriend",
+      "updated": "2026-08-09"
+    },
+    "father_parmeshwar": {
+      "value": "father",
+      "updated": "2026-08-09"
+    },
+    "mother_sneh_lata": {
+      "value": "mother",
+      "updated": "2026-08-09"
     }
   },
-  "wishes": {
-    "conference_assistance": {
-      "value": "wants assistance analyzing documents",
-      "updated": "2026-07-24"
-    }
-  },
+  "wishes": {},
   "notes": {
-    "phone_pin": {
-      "value": "0718",
-      "updated": "2026-07-19"
+    "portfolio_purpose": {
+      "value": "showcase Daksh Arora as chemical engineer with coding skills",
+      "updated": "2026-08-06"
     },
-    "useful_research_tools": {
-      "value": "Jarvis tools provides good science data and research papers",
-      "updated": "2026-07-20"
+    "tech_stack_requested": {
+      "value": "HTML website",
+      "updated": "2026-08-06"
     },
-    "conference_date": {
-      "value": "conference tomorrow",
-      "updated": "2026-07-24"
+    "harsh_brother_mentioned": {
+      "value": "User referred to Harsh as 'Harsh brother' in a negative context, calling him the biggest fool; user stated he won't speak about it further",
+      "updated": "2026-08-06"
     },
-    "upload_documents": {
-      "value": "will upload research paper and presentation",
-      "updated": "2026-07-24"
+    "restaurant_conservation": {
+      "value": "task to be done",
+      "updated": "2026-08-06"
     },
-    "uses_whatsapp": {
-      "value": "communicates via WhatsApp",
-      "updated": "2026-08-03"
+    "receives_random_messages": {
+      "value": "gets messages from random people",
+      "updated": "2026-08-08"
+    },
+    "girlfriend_phone_number": {
+      "value": "9714406100",
+      "updated": "2026-08-09"
+    },
+    "father_phone_number": {
+      "value": "7908443121",
+      "updated": "2026-08-09"
+    },
+    "mother_phone_number": {
+      "value": "9832731345",
+      "updated": "2026-08-09"
+    },
+    "will_create_doc_in_documents_folder": {
+      "value": "true",
+      "updated": "2026-08-09"
     }
   }
 }

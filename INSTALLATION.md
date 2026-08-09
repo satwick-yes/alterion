@@ -1,6 +1,6 @@
-# Jarvis AI - Installation Guide
+# Vani AI - Installation Guide
 
-Welcome to the Jarvis AI setup! Follow these steps to install and start Jarvis on your Windows machine.
+Welcome to the Vani AI setup! Follow these steps to install and start Vani on your Windows machine.
 
 ## Prerequisites
 1. **Python 3.12 or newer**: Make sure you have Python installed. When installing Python, ensure you check the box that says **"Add Python to PATH"**.
@@ -18,20 +18,20 @@ Alternatively, you can configure keys manually:
 - To just configure keys: run `python setup\setup_keys.py`
 
 ## Step 2: Configure API Keys
-Jarvis requires API keys (such as Google Gemini and OpenRouter) to function.
+Vani requires API keys (such as Google Gemini and OpenRouter) to function.
 
-1. Open your terminal or command prompt in the Jarvis folder.
+1. Open your terminal or command prompt in the Vani folder.
 2. Run the following command:
    ```cmd
    python setup\setup_keys.py
    ```
 3. Follow the on-screen prompts to enter your API keys. This will securely save them to `config\api_keys.json`.
 
-## Step 3: Starting Jarvis
-You have a few options for starting Jarvis, depending on your needs:
+## Step 3: Starting Vani
+You have a few options for starting Vani, depending on your needs:
 
-- **Background Mode (Recommended)**: Double-click `launchers\start_jarvis.bat`. Jarvis will run silently in the background without keeping a console window open.
-- **Console Mode (For Debugging)**: Double-click `launchers\jarvis_console.bat`. This will open a visible command prompt so you can see the logs and actions as Jarvis performs them.
+- **Background Mode (Recommended)**: Double-click `launchers\start_vani.bat`. Vani will run silently in the background without keeping a console window open.
+- **Console Mode (For Debugging)**: Double-click `launchers\vani_console.bat`. This will open a visible command prompt so you can see the logs and actions as Vani performs them.
 ## Troubleshooting
 - **Smart App Control / Windows Defender blocking the setup file**: Because you downloaded these files from the internet, Windows might block the `.bat` scripts. To fix this:
   1. Right-click the `setup.bat` (or any `.bat` file you're trying to run).
@@ -39,4 +39,4 @@ You have a few options for starting Jarvis, depending on your needs:
   3. At the bottom of the General tab, look for a Security section and check the **Unblock** box.
   4. Click **Apply** and **OK**, then try running the file again.
 - If you encounter issues during `install_dependencies.bat`, ensure you have the latest `pip` installed by running `python -m pip install --upgrade pip` in your command prompt.
-- Make sure you are running the setup scripts from the main `jarvis ai` folder.
+- Make sure you are running the setup scripts from the main `vani ai` folder.

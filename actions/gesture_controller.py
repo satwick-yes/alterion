@@ -42,7 +42,13 @@ class GestureController(QObject):
         new_x = int(self.last_mouse_x + (target_x - self.last_mouse_x) * SMOOTHING)
         new_y = int(self.last_mouse_y + (target_y - self.last_mouse_y) * SMOOTHING)
         
-        pyautogui.moveTo(new_x, new_y)
+        # Ensure failsafe is off right before move, as other modules might re-enable it
+        pyautogui.FAILSAFE = False
+        try:
+            pyautogui.moveTo(new_x, new_y)
+        except pyautogui.FailSafeException:
+            pass
+            
         self.last_mouse_x = new_x
         self.last_mouse_y = new_y
 
@@ -56,7 +62,12 @@ class GestureController(QObject):
         target_x = max(0, min(self.screen_w - 1, target_x))
         target_y = max(0, min(self.screen_h - 1, target_y))
         
-        pyautogui.moveTo(target_x, target_y)
+        pyautogui.FAILSAFE = False
+        try:
+            pyautogui.moveTo(target_x, target_y)
+        except pyautogui.FailSafeException:
+            pass
+            
         self.last_mouse_x = target_x
         self.last_mouse_y = target_y
 

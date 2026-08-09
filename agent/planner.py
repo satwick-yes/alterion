@@ -14,7 +14,7 @@ BASE_DIR        = get_base_dir()
 API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
 
 
-PLANNER_PROMPT = """You are the planning module of Jarvis, a personal AI assistant.
+PLANNER_PROMPT = """You are the planning module of Vani, a personal AI assistant.
 Your job: break any user goal into a sequence of steps using ONLY the tools listed below.
 
 ABSOLUTE RULES:
@@ -116,6 +116,9 @@ code_helper
   language: string (optional)
   output_path: string (optional)
   file_path: string (optional)
+
+memorize_fact
+  fact: string (required) — concise statement of the user's preference or fact to remember (e.g. "User prefers Chrome browser")
 
 dev_agent
   description: string (required)

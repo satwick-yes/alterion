@@ -264,7 +264,8 @@ def send_message(
     message_text = re.sub(r"^.*?saying(?:\s+that)?:\s*['\"]?(.*?)['\"]?$", r"\1", message_text, flags=re.IGNORECASE).strip()
 
     receiver = re.sub(r'(?i)\s+(on|via)\s+(whatsapp|telegram|instagram|discord|messenger|skype|signal).*$', '', receiver).strip()
-    receiver = re.sub(r'(?i)^(to|for|message|contact)\s+', '', receiver).strip()
+    # Strip common command prefixes from receiver
+    receiver = re.sub(r'(?i)^(send\s+(a\s+)?(whatsapp\s+)?message\s+to\s+(the\s+)?(number\s+)?|message\s+|contact\s+|to\s+|for\s+)', '', receiver).strip()
     platform     = params.get("platform", "whatsapp").strip().lower()
 
     browser_param = params.get("browser", "").lower().strip()

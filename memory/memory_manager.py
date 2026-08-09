@@ -157,11 +157,11 @@ def update_memory(memory_update: dict) -> dict:
     return memory
 
 
-def should_extract_memory(user_text: str, jarvis_text: str, api_key: str = "") -> bool:
+def should_extract_memory(user_text: str, vani_text: str, api_key: str = "") -> bool:
     try:
-        from or_client import client
+        from core.or_client import client
 
-        combined = f"User: {user_text[:300]}\nRio: {jarvis_text[:1000]}"
+        combined = f"User: {user_text[:300]}\nRio: {vani_text[:1000]}"
 
         result = client.chat(
             f"Does this conversation contain ANY of the following?\n"
@@ -183,11 +183,11 @@ def should_extract_memory(user_text: str, jarvis_text: str, api_key: str = "") -
         return False
 
 
-def extract_memory(user_text: str, jarvis_text: str, api_key: str = "") -> dict:
+def extract_memory(user_text: str, vani_text: str, api_key: str = "") -> dict:
     try:
-        from or_client import client
+        from core.or_client import client
 
-        combined = f"User: {user_text[:600]}\nRio: {jarvis_text[:300]}"
+        combined = f"User: {user_text[:600]}\nRio: {vani_text[:300]}"
 
         raw = client.chat(
             f"Extract ALL memorable personal facts from this conversation. Any language.\n"
@@ -199,20 +199,20 @@ def extract_memory(user_text: str, jarvis_text: str, api_key: str = "") -> dict:
             f"                  favorite_game, favorite_sport, favorite_book, favorite_artist,\n"
             f"                  favorite_country, hobbies, interests, dislikes, etc.\n"
             f"  projects      → projects being built, ongoing work, goals, ideas in progress\n"
-            f"                  (e.g. jarvis_project: 'Building a JARVIS-like AI assistant')\n"
+            f"                  (e.g. vani_project: 'Building a VANI-like AI assistant')\n"
             f"  relationships → people mentioned: friends, family, partner, colleagues\n"
             f"                  (e.g. best_friend_ali: 'Best friend, met in university')\n"
             f"  wishes        → future plans, things to buy, travel plans, dreams\n"
             f"  notes         → anything else worth remembering (habits, schedule, etc.)\n\n"
             f"IMPORTANT:\n"
             f"- Be LIBERAL: if something MIGHT be worth remembering, include it.\n"
-            f"- Extract from BOTH user and Jarvis turns.\n"
+            f"- Extract from BOTH user and Vani turns.\n"
             f"- Skip: weather, reminders, search results, one-time commands.\n"
             f"- Use concise English values regardless of conversation language.\n\n"
             f"Format:\n"
             f'{{"identity":{{"name":{{"value":"Ali"}}}},\n'
             f' "preferences":{{"favorite_color":{{"value":"blue"}}}},\n'
-            f' "projects":{{"jarvis_project":{{"value":"JARVIS-like AI assistant"}}}},\n'
+            f' "projects":{{"vani_project":{{"value":"VANI-like AI assistant"}}}},\n'
             f' "relationships":{{"friend_yusuf":{{"value":"close friend"}}}},\n'
             f' "wishes":{{"buy_guitar":{{"value":"wants an acoustic guitar"}}}},\n'
             f' "notes":{{"works_at_night":{{"value":"usually active late at night"}}}}}}\n\n'
@@ -334,3 +334,62 @@ def forget(key: str, category: str = "notes") -> str:
     return f"Not found: {category}/{key}"
 
 forget_memory = forget
+
+CHAT_HISTORY_PATH = BASE_DIR / "memory" / "chat_history.json"
+CHAT_HISTORY_MAX_MESSAGES = 100
+
+def append_chat_log(role: str, text: str) -> None:
+    if not text or not text.strip():
+        return
+        
+    CHAT_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    history = []
+    
+    with _lock:
+        if CHAT_HISTORY_PATH.exists():
+            try:
+                history = json.loads(CHAT_HISTORY_PATH.read_text(encoding="utf-8"))
+                if not isinstance(history, list):
+                    history = []
+            except Exception:
+                history = []
+                
+        history.append({
+            "role": role,
+            "content": text,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        if len(history) > CHAT_HISTORY_MAX_MESSAGES:
+            history = history[-CHAT_HISTORY_MAX_MESSAGES:]
+            
+        try:
+            CHAT_HISTORY_PATH.write_text(json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            print(f"[Memory] ⚠️ Failed to save chat history: {e}")
+
+def get_recent_chat_history(limit: int = 20) -> list[dict]:
+    if not CHAT_HISTORY_PATH.exists():
+        return []
+        
+    with _lock:
+        try:
+            history = json.loads(CHAT_HISTORY_PATH.read_text(encoding="utf-8"))
+            if isinstance(history, list):
+                return history[-limit:]
+        except Exception as e:
+            print(f"[Memory] ⚠️ Failed to load chat history: {e}")
+    
+    return []
+
+def format_chat_history_for_prompt(limit: int = 20) -> str:
+    history = get_recent_chat_history(limit)
+    if not history:
+        return ""
+        
+    lines = ["[PAST CONVERSATION HISTORY - Context from recent interactions]"]
+    for msg in history:
+        role_label = "User" if msg.get("role") == "user" else "Vani"
+        lines.append(f"{role_label}: {msg.get('content')}")
+        
+    return "\n".join(lines) + "\n"

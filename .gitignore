@@ -27,6 +27,7 @@ next-env.d.ts
 
 # Secrets and Configs
 config/api_keys.json
+core/config/api_keys.json
 
 # Voice Biometrics and Models
 config/user_voice_profile.pt
@@ -39,8 +40,13 @@ __pycache__/
 logs/
 memory/
 presentations/
-jarvis.pid
+vani.pid
 adb_error.log
 .agents/
 scratch/
 qr_code.png
+venv/
+dist/
+build/
+*.spec
+build_app.bat

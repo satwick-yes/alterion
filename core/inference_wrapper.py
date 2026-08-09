@@ -2,11 +2,15 @@ import json
 import os
 import sys
 import logging
+import threading
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("inference_wrapper")
+
+# Thread-local storage for overriding the active API provider per thread
+_thread_local = threading.local()
 
 def get_base_dir() -> Path:
     if getattr(sys, "frozen", False):
@@ -23,7 +27,14 @@ class InferenceWrapper:
         self.nvidia_key = ""
         self.openai_key = ""
         self.groq_key = ""
+        self.deepseek_key = ""
+        self.cohere_key = ""
+        self.cerebras_key = ""
+        self.mistral_key = ""
+        self.sambanova_key = ""
+        self.cloudflare_key = ""
         self.default_provider = "gemini"
+        self.requires_consensus = False
         self._load_keys()
 
     def _load_keys(self):
@@ -36,6 +47,12 @@ class InferenceWrapper:
                 self.nvidia_key = data.get("nvidia_api_key", "").strip()
                 self.openai_key = data.get("openai_api_key", "").strip()
                 self.groq_key = data.get("groq_api_key", "").strip()
+                self.deepseek_key = data.get("deepseek_api_key", "").strip()
+                self.cohere_key = data.get("cohere_api_key", "").strip()
+                self.cerebras_key = data.get("cerebras_api_key", "").strip()
+                self.mistral_key = data.get("mistral_api_key", "").strip()
+                self.sambanova_key = data.get("sambanova_api_key", "").strip()
+                self.cloudflare_key = data.get("cloudflare_api_key", "").strip()
             
             is_gemini_valid = bool(self.gemini_key)
             is_groq_valid = bool(self.groq_key)
@@ -49,6 +66,16 @@ class InferenceWrapper:
         except Exception as e:
             logger.error(f"Failed to load API keys: {e}")
 
+    def get_active_providers(self) -> List[str]:
+        providers = []
+        if self.gemini_key: providers.append("gemini")
+        if self.groq_key: providers.append("groq")
+        if self.openai_key: providers.append("openai")
+        if self.openrouter_key: providers.append("openrouter")
+        if self.deepseek_key: providers.append("deepseek")
+        # Skipping Nvidia here as it's specialized for vision/large reasoning, but it's an option.
+        return providers if providers else ["gemini"]
+
     def generate_text(
         self,
         prompt: str,
@@ -58,7 +85,13 @@ class InferenceWrapper:
         temperature: float = 0.7,
         max_tokens: int = 2048
     ) -> str:
-        provider = provider or self.default_provider
+        override = getattr(_thread_local, "override_provider", None)
+        provider = provider or override or self.default_provider
+        
+        # Trigger MoA fallback immediately if the router flagged this as requiring consensus
+        if getattr(self, "requires_consensus", False):
+            self.requires_consensus = False
+            return self.generate_consensus_text(prompt, system_instruction, temperature, max_tokens)
         
         try:
             if provider == "local":
@@ -74,6 +107,16 @@ class InferenceWrapper:
                 return self._call_openai_text(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "groq":
                 return self._call_groq_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "deepseek":
+                return self._call_deepseek_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "cerebras":
+                return self._call_cerebras_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "mistral":
+                return self._call_mistral_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "sambanova":
+                return self._call_sambanova_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "cloudflare":
+                return self._call_cloudflare_text(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -95,7 +138,8 @@ class InferenceWrapper:
         temperature: float = 0.2,
         max_tokens: int = 2048
     ) -> Dict:
-        provider = provider or self.default_provider
+        override = getattr(_thread_local, "override_provider", None)
+        provider = provider or override or self.default_provider
         
         try:
             if provider == "gemini":
@@ -108,6 +152,10 @@ class InferenceWrapper:
                 return self._call_openai_json(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "groq":
                 return self._call_groq_json(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "deepseek":
+                return self._call_deepseek_json(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "mistral":
+                return self._call_mistral_json(prompt, system_instruction, model, temperature, max_tokens)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
@@ -126,42 +174,54 @@ class InferenceWrapper:
         return val[:768]
 
     def generate_embedding(self, text: str) -> List[float]:
-        if not self.gemini_key:
-            return self._emulated_embedding(text)
-            
-        try:
-            from google import genai
-            client = genai.Client(api_key=self.gemini_key)
+        # Primary: Cohere embed-english-v3.0 (best quality, stable)
+        if self.cohere_key:
             try:
+                import requests
+                resp = requests.post(
+                    "https://api.cohere.com/v2/embed",
+                    headers={"Authorization": f"Bearer {self.cohere_key}", "Content-Type": "application/json"},
+                    json={"texts": [text], "model": "embed-english-v3.0", "input_type": "search_document", "embedding_types": ["float"]},
+                    timeout=10
+                )
+                data = resp.json()
+                emb = data.get("embeddings", {}).get("float", [[]])[0]
+                if emb:
+                    logger.info("[Embedding] Cohere OK.")
+                    return emb
+            except Exception as e:
+                logger.warning(f"Cohere embedding failed: {e}. Trying Gemini fallback.")
+
+        # Fallback: Gemini text-embedding-004
+        if self.gemini_key:
+            try:
+                from google import genai
+                client = genai.Client(api_key=self.gemini_key)
                 response = client.models.embed_content(
                     model="text-embedding-004",
                     contents=text
                 )
-            except Exception:
-                response = client.models.embed_content(
-                    model="models/text-embedding-004",
-                    contents=text
-                )
-            embeddings = getattr(response, "embeddings", None)
-            if embeddings and len(embeddings) > 0:
-                return embeddings[0].values
-            raise ValueError("No embeddings returned from API")
-        except Exception as e:
-            logger.warning(f"Gemini embedding failed: {e}. Trying google-generativeai fallback.")
-            try:
-                import google.generativeai as old_genai
-                old_genai.configure(api_key=self.gemini_key)
-                response = old_genai.embed_content(
-                    model="models/text-embedding-004",
-                    content=text
-                )
-                emb = response.get("embedding", [])
-                if emb:
-                    return emb
-                raise ValueError("Empty fallback embedding")
-            except Exception as e2:
-                logger.warning(f"Fallback embedding failed: {e2}. Using emulated embedding.")
-                return self._emulated_embedding(text)
+                embeddings = getattr(response, "embeddings", None)
+                if embeddings and len(embeddings) > 0:
+                    logger.info("[Embedding] Gemini OK.")
+                    return embeddings[0].values
+            except Exception as e:
+                logger.warning(f"Gemini embedding failed: {e}. Trying google-generativeai fallback.")
+                try:
+                    import google.generativeai as old_genai
+                    old_genai.configure(api_key=self.gemini_key)
+                    response = old_genai.embed_content(
+                        model="models/text-embedding-004",
+                        content=text
+                    )
+                    emb = response.get("embedding", [])
+                    if emb:
+                        return emb
+                except Exception as e2:
+                    logger.warning(f"Gemini legacy embedding also failed: {e2}.")
+
+        logger.warning("All embedding providers failed. Using emulated embedding.")
+        return self._emulated_embedding(text)
 
     # --- GEMINI IMPLEMENTATIONS ---
     def _call_gemini_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
@@ -172,7 +232,13 @@ class InferenceWrapper:
             client = genai.Client(api_key=self.gemini_key)
             config = types.GenerateContentConfig(
                 temperature=temp,
-                max_output_tokens=max_tok
+                max_output_tokens=max_tok,
+                safety_settings=[
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                ]
             )
             if system:
                 config.system_instruction = system
@@ -191,8 +257,16 @@ class InferenceWrapper:
                     model_name=model,
                     system_instruction=system
                 )
+                
+                safety_settings = [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                ]
+                
                 config = {"temperature": temp, "max_output_tokens": max_tok}
-                response = client_model.generate_content(prompt, generation_config=config)
+                response = client_model.generate_content(prompt, generation_config=config, safety_settings=safety_settings)
                 return response.text.strip()
             except Exception as e2:
                 logger.error(f"Gemini fallback failed: {e2}")
@@ -207,7 +281,13 @@ class InferenceWrapper:
             config = types.GenerateContentConfig(
                 temperature=temp,
                 max_output_tokens=max_tok,
-                response_mime_type="application/json"
+                response_mime_type="application/json",
+                safety_settings=[
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                    types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                ]
             )
             if system:
                 config.system_instruction = system
@@ -226,12 +306,20 @@ class InferenceWrapper:
                     model_name=model,
                     system_instruction=system
                 )
+                
+                safety_settings = [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                ]
+                
                 config = {
                     "temperature": temp,
                     "max_output_tokens": max_tok,
                     "response_mime_type": "application/json"
                 }
-                response = client_model.generate_content(prompt, generation_config=config)
+                response = client_model.generate_content(prompt, generation_config=config, safety_settings=safety_settings)
                 clean_text = response.text.strip()
                 import re
                 clean_text = re.sub(r"```(?:json)?", "", clean_text).strip().rstrip("`").strip()
@@ -244,7 +332,7 @@ class InferenceWrapper:
     def _call_openrouter_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
         try:
             sys.path.append(str(BASE_DIR))
-            import or_client
+            from core import or_client
             client_inst = or_client.OpenRouterClient()
             return client_inst.chat(
                 prompt=prompt,
@@ -260,7 +348,7 @@ class InferenceWrapper:
     def _call_openrouter_json(self, prompt: str, system: Optional[str], model: Optional[str], max_tok: int) -> Dict:
         try:
             sys.path.append(str(BASE_DIR))
-            import or_client
+            from core import or_client
             client_inst = or_client.OpenRouterClient()
             return client_inst.chat_json(
                 prompt=prompt,
@@ -396,6 +484,143 @@ class InferenceWrapper:
             logger.error(f"Groq JSON failed: {e}")
             raise RuntimeError(f"Groq JSON generation failed: {e}")
 
+    # --- DEEPSEEK IMPLEMENTATIONS ---
+    def _call_deepseek_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "deepseek-chat"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.deepseek_key, base_url="https://api.deepseek.com")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok
+            )
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"DeepSeek text failed: {e}")
+            raise RuntimeError(f"DeepSeek generation failed: {e}")
+
+    def _call_deepseek_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
+        model = model or "deepseek-chat"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.deepseek_key, base_url="https://api.deepseek.com")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok,
+                response_format={"type": "json_object"}
+            )
+            return json.loads(resp.choices[0].message.content.strip())
+        except Exception as e:
+            logger.error(f"DeepSeek JSON failed: {e}")
+            raise RuntimeError(f"DeepSeek JSON generation failed: {e}")
+
+    # --- CEREBRAS IMPLEMENTATIONS ---
+    def _call_cerebras_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "llama-3.3-70b"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.cerebras_key, base_url="https://api.cerebras.ai/v1")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            resp = client.chat.completions.create(model=model, messages=messages, temperature=temp, max_tokens=max_tok)
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Cerebras text failed: {e}")
+            raise RuntimeError(f"Cerebras generation failed: {e}")
+
+    # --- MISTRAL IMPLEMENTATIONS ---
+    def _call_mistral_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "mistral-small-latest"
+        try:
+            import requests
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            resp = requests.post(
+                "https://api.mistral.ai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.mistral_key}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages, "temperature": temp, "max_tokens": max_tok},
+                timeout=30
+            )
+            return resp.json()["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            logger.error(f"Mistral text failed: {e}")
+            raise RuntimeError(f"Mistral generation failed: {e}")
+
+    def _call_mistral_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
+        model = model or "mistral-small-latest"
+        try:
+            import requests
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            resp = requests.post(
+                "https://api.mistral.ai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.mistral_key}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages, "temperature": temp, "max_tokens": max_tok, "response_format": {"type": "json_object"}},
+                timeout=30
+            )
+            return json.loads(resp.json()["choices"][0]["message"]["content"].strip())
+        except Exception as e:
+            logger.error(f"Mistral JSON failed: {e}")
+            raise RuntimeError(f"Mistral JSON generation failed: {e}")
+
+    # --- SAMBANOVA IMPLEMENTATIONS ---
+    def _call_sambanova_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "Meta-Llama-3.3-70B-Instruct"
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.sambanova_key, base_url="https://api.sambanova.ai/v1")
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            resp = client.chat.completions.create(model=model, messages=messages, temperature=temp, max_tokens=max_tok)
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"SambaNova text failed: {e}")
+            raise RuntimeError(f"SambaNova generation failed: {e}")
+
+    # --- CLOUDFLARE IMPLEMENTATIONS ---
+    def _call_cloudflare_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
+        model = model or "@cf/meta/llama-3.1-8b-instruct"
+        try:
+            import requests
+            # Extract account ID from key format or use key directly as Bearer token
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            resp = requests.post(
+                f"https://api.cloudflare.com/client/v4/accounts/auto/ai/run/{model}",
+                headers={"Authorization": f"Bearer {self.cloudflare_key}", "Content-Type": "application/json"},
+                json={"messages": messages, "max_tokens": max_tok},
+                timeout=15
+            )
+            data = resp.json()
+            return data.get("result", {}).get("response", "").strip()
+        except Exception as e:
+            logger.error(f"Cloudflare text failed: {e}")
+            raise RuntimeError(f"Cloudflare generation failed: {e}")
+
     def generate_consensus_text(
         self,
         prompt: str,
@@ -414,8 +639,11 @@ class InferenceWrapper:
         models = [
             ("gemini", None),
             ("openrouter", "nvidia/nemotron-3-super-120b-a12b:free"),
-            ("openrouter", "meta-llama/llama-3.3-70b-instruct:free")
+            ("openrouter", "meta-llama/llama-3.3-70b-instruct:free"),
+            ("sambanova", "Meta-Llama-3.3-70B-Instruct") if self.sambanova_key else None,
+            ("mistral", "mistral-large-latest") if self.mistral_key else None,
         ]
+        models = [m for m in models if m is not None]
         
         def _call_worker(prov, mod):
             try:
@@ -449,7 +677,7 @@ class InferenceWrapper:
         # Synthesize the final answer using the primary provider
         resp3_str = f"--- Draft Response 3:\n{valid_responses[2]}" if len(valid_responses) > 2 else ""
         synthesis_prompt = f"""
-You are the master response synthesizer for Jarvis.
+You are the master response synthesizer for Vani.
 Below are draft responses generated by different AI models for the user's prompt: "{prompt}"
 
 ---
@@ -465,7 +693,7 @@ Draft Response 2:
 
 Task:
 Synthesize these draft responses into a single, high-quality, comprehensive, and cohesive response for the user.
-Combine their details, resolve any contradictions or factual discrepancies, and ensure a polite, professional, and helpful tone fitting for Tony Stark's assistant Jarvis.
+Combine their details, resolve any contradictions or factual discrepancies, and ensure a helpful, friendly and natural tone fitting for Satwick's personal AI Vani.
 Keep it concise and do not repeat information.
 """
         logger.info("[MoA] Synthesizing consensus response from parallel inputs...")

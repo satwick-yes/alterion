@@ -80,7 +80,7 @@ TASK_LIBRARY = {
     "enable narrator": {"type": "hotkey", "keys": ["ctrl", "win", "enter"]},
     "use the on-screen keyboard": {"type": "cmd", "cmd": "osk"},
 
-    # PORTED JARVIS EXTENDED UTILITIES
+    # PORTED VANI EXTENDED UTILITIES
     "check wifi passwords": {"type": "func", "module": "actions.wifi_tools", "func": "get_wifi_passwords"},
     "show wifi status": {"type": "func", "module": "actions.wifi_tools", "func": "get_wifi_status"},
     "check system stats": {"type": "func", "module": "actions.system_diagnostics", "func": "get_system_stats"},

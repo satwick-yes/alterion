@@ -36,7 +36,7 @@ def lookup_dictionary(word: str) -> str:
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word_clean}"
 
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Jarvis/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "Vani/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if isinstance(data, list) and len(data) > 0:
@@ -71,7 +71,7 @@ def translate_text(text: str, target_lang: str = "es") -> str:
     url = f"https://api.mymemory.translated.net/get?q={text_encoded}&langpair=en|{lang_encoded}"
 
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Jarvis/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "Vani/1.0"})
         with urllib.request.urlopen(req, timeout=6) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             response_data = data.get("responseData", {})

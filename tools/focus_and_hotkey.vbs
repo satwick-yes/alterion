@@ -1,5 +1,5 @@
 ' focus_and_hotkey.vbs
-' Called by Jarvis computer_control.py to focus a window and send a hotkey.
+' Called by Vani computer_control.py to focus a window and send a hotkey.
 ' wscript.exe runs outside Python sandbox with full desktop access.
 '
 ' Usage: wscript //Nologo focus_and_hotkey.vbs "Discord" "^+v"

@@ -23,7 +23,7 @@ class LocalEngine:
         """Checks if local Ollama server is running and fetches installed models."""
         try:
             url = f"{self.ollama_url}/api/tags"
-            req = urllib.request.Request(url, headers={"User-Agent": "Jarvis-Local/1.0"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Vani-Local/1.0"})
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 models = data.get("models", [])

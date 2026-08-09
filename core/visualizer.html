@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Jarvis Orb Visualizer</title>
+  <title>Vani Orb Visualizer</title>
   <style>
     * {
       margin: 0;
@@ -200,7 +200,7 @@
   <div class="overlay-grain"></div>
   <div class="overlay-scanlines"></div>
 
-  <div class="hud hud-title">J.A.R.V.I.S.</div>
+  <div class="hud hud-title">Vani</div>
   <div class="status-panel hud" id="status-text">● STANDBY</div>
 
   <div class="hud hud-hint">
@@ -510,7 +510,7 @@
     }
 
     // ——— EXTERNAL COMMUNICATION API ———
-    window.setJarvisState = function(state, level = 0) {
+    window.setVaniState = function(state, level = 0) {
       state = state.toUpperCase();
       if (!STATES[state]) return;
       curState = state;

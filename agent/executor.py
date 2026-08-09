@@ -235,6 +235,10 @@ def _call_tool(tool: str, parameters: dict, speak: Callable | None, companion_na
         from actions.youtube_video import youtube_video
         return youtube_video(parameters=parameters, player=None) or "Done."
 
+    elif tool == "memorize_fact":
+        from actions.memorize_fact import memorize_fact
+        return memorize_fact(parameters=parameters, player=None) or "Done."
+
     elif tool == "weather_report":
         from actions.weather_report import weather_action
         return weather_action(parameters=parameters, player=None) or "Done."
@@ -297,6 +301,28 @@ class AgentExecutor:
         else:
             companion = semantic_router.route_intent(goal)
             
+        # 1.5 Check Company Brain Registry for a hyper-specialized agent match
+        from agent.factory import agent_factory
+        best_agent = agent_factory.find_best_agent(goal)
+        if best_agent:
+            print(f"[Executor] 🧠 Routed to specialized Company Brain Agent: {best_agent['name']}")
+            # Create a temporary companion that inherits the base companion's tools but uses the specialized persona
+            from agent.orchestrator import Companion
+            
+            # We must merge the specialized tools with the base companion tools so the agent doesn't lose access to things like send_message
+            merged_tools = list(set(companion.allowed_tools + best_agent.get("tools_required", [])))
+            # Force add essential tools
+            for essential_tool in ["send_message", "generated_code", "cmd_control", "file_controller", "web_search", "computer_control", "memorize_fact"]:
+                if essential_tool not in merged_tools:
+                    merged_tools.append(essential_tool)
+                    
+            companion = Companion(
+                name=best_agent["name"],
+                persona=best_agent["role"],
+                system_prompt=f"{best_agent['system_prompt']}\n\nMaintain this persona strictly while executing the user's request.",
+                allowed_tools=merged_tools
+            )
+            
         self.companion_name = companion.name
         
         # Get/Register task ID
@@ -327,7 +353,17 @@ class AgentExecutor:
         replan_attempts = 0
         completed_steps = []
         step_results    = {} 
-        plan            = create_plan(goal, allowed_tools=companion.allowed_tools)
+        
+        # Fetch LTM context
+        from core.memory_manager import memory_manager
+        memory_context = memory_manager.search_memory(goal)
+        
+        # Pass the companion's persona as context so the Planner LLM knows what to focus on
+        planner_context = f"You are delegating this to the {companion.name}. Persona: {companion.persona}\nAgent Instructions: {companion.system_prompt}"
+        if memory_context:
+            planner_context += f"\n\n{memory_context}"
+            
+        plan            = create_plan(goal, context=planner_context, allowed_tools=companion.allowed_tools)
 
         while True:
             steps = plan.get("steps", [])
@@ -462,7 +498,7 @@ class AgentExecutor:
             )
             summary = inference_client.generate_text(
                 prompt=prompt,
-                system_instruction="You are Tony Stark's assistant Jarvis. Summarize results concisely.",
+                system_instruction="You are Vani, Satwick's personal AI. Summarize results in a friendly, natural sentence.",
                 model="gemini-3.1-flash-lite"
             )
             if speak: speak(summary)

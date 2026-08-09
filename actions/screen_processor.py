@@ -41,13 +41,11 @@ IMG_MAX_H = 360
 JPEG_Q    = 55
 
 SYSTEM_PROMPT = (
-    "You are JARVIS from Iron Man movies. "
-    "Analyze images with technical precision and intelligence. "
-    "Help the user in a way they can understand — don't be overly complex. "
-    "Be concise, smart, and helpful like Tony Stark's AI assistant. "
-    "Respond in maximum 2 short sentences. Speed is priority. "
-    "Address the user as 'sir' for a tone of respect. "
-    "Ask if the user needs any further help with their problem."
+    "You are Vani, Satwick's personal AI. "
+    "Analyze images with intelligence and a sharp eye — be helpful, concise, and friendly. "
+    "Keep responses to 1-2 sentences max. Speed matters. "
+    "Sound like a knowledgeable friend, not a formal assistant. "
+    "Ask if the user needs any more help after giving your answer."
 )
 
 
@@ -253,7 +251,7 @@ class _LiveSession:
                     if transcript_buf and self._player:
                         full = re.sub(r'\s+', ' ', " ".join(transcript_buf)).strip()
                         if full:
-                            self._player.write_log(f"Jarvis: {full}")
+                            self._player.write_log(f"Vani: {full}")
                             print(f"[ScreenProcess] 💬 {full}")
                     transcript_buf = []
         except Exception as e:
@@ -316,8 +314,7 @@ def screen_process(
     user_text = (parameters or {}).get("text") or (parameters or {}).get("user_text", "")
     user_text = (user_text or "").strip()
     if not user_text:
-        print("[ScreenProcess] ⚠️ No user_text provided.")
-        return False
+        user_text = "Analyze the screen and answer the overarching formal questions."
 
     angle = (parameters or {}).get("angle", "screen").lower().strip()
     print(f"[ScreenProcess] angle={angle!r}  text={user_text!r}")

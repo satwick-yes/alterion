@@ -38,10 +38,22 @@ def _resolve_path(raw: str) -> Path:
         "videos":    Path.home() / "Videos",
         "home":      Path.home(),
     }
-    lower = raw.strip().lower()
-    if lower in shortcuts:
-        return shortcuts[lower]
-    return Path(raw).expanduser()
+    raw = raw.strip().replace('\\', '/')
+    parts = raw.split('/')
+    
+    first_part = parts[0].lower()
+    if first_part in shortcuts:
+        base = shortcuts[first_part]
+        if len(parts) > 1:
+            return base.joinpath(*parts[1:])
+        return base
+        
+    p = Path(raw).expanduser()
+    if p.is_absolute():
+        return p
+    
+    # Default to Desktop if relative path without a recognized shortcut
+    return shortcuts["desktop"] / p
 
 
 def _format_size(bytes_size: int) -> str:

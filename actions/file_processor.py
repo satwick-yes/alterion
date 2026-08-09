@@ -1,5 +1,5 @@
 """
-file_processor.py — JARVIS Universal File Processor
+file_processor.py — VANI Universal File Processor
 
 Supported types:
   image   → describe, ocr, resize, convert, compress, crop
@@ -30,7 +30,7 @@ class _GenAIWrapper:
         from core.inference_wrapper import inference_client
         res = inference_client.generate_text(
             prompt=prompt,
-            system_instruction="You are JARVIS, an expert AI assistant."
+            system_instruction="You are VANI, an expert AI assistant."
         )
         class Response:
             text = res
@@ -205,7 +205,7 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
 
         if instruction:
             prompt = (
-                f"You are JARVIS, an expert AI research assistant.\n"
+                f"You are VANI, an expert AI research assistant.\n"
                 f"The user uploaded this research paper / PDF document: '{path.name}'\n\n"
                 f"User Instruction:\n{instruction}\n\n"
                 f"Document Content:\n{text[:40000]}\n\n"
@@ -300,7 +300,7 @@ def _process_text_doc(path: Path, file_type: str, action: str,
     instruction = (params.get("instruction") or "").strip()
     if instruction:
         prompt = (
-            f"You are JARVIS, an expert AI research assistant.\n"
+            f"You are VANI, an expert AI research assistant.\n"
             f"The user uploaded this document: '{path.name}'\n\n"
             f"User Instruction:\n{instruction}\n\n"
             f"Document Content:\n{content[:40000]}\n\n"

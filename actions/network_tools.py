@@ -7,7 +7,7 @@ import platform
 def get_ip_info() -> str:
     """Fetches public IP address, location, ISP, and country info."""
     try:
-        req = urllib.request.Request("http://ip-api.com/json/", headers={"User-Agent": "Jarvis/1.0"})
+        req = urllib.request.Request("http://ip-api.com/json/", headers={"User-Agent": "Vani/1.0"})
         with urllib.request.urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode("utf-8"))
             if data.get("status") == "success":
@@ -25,7 +25,7 @@ def get_ip_info() -> str:
 
 def run_speed_test() -> str:
     """Performs a lightweight network speed and latency test."""
-    results = ["=== JARVIS Network Speed Diagnostic ==="]
+    results = ["=== VANI Network Speed Diagnostic ==="]
     
     # Ping test
     host = "8.8.8.8"

@@ -12,7 +12,7 @@ def get_system_stats() -> str:
     """
     Returns a comprehensive diagnostic report of system performance, CPU, RAM, Disk, and Battery stats.
     """
-    lines = ["=== JARVIS System Diagnostics ==="]
+    lines = ["=== VANI System Diagnostics ==="]
     lines.append(f"OS: {platform.system()} {platform.release()} ({platform.architecture()[0]})")
     lines.append(f"Hostname: {platform.node()}")
 

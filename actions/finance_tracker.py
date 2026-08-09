@@ -17,7 +17,7 @@ def get_crypto_price(coin: str = "bitcoin") -> str:
 
     try:
         url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd,eur,inr"
-        req = urllib.request.Request(url, headers={"User-Agent": "Jarvis/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "Vani/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if coin_id in data:
@@ -40,7 +40,7 @@ def convert_currency(amount: float, from_curr: str = "USD", to_curr: str = "EUR"
 
     try:
         url = f"https://open.er-api.com/v6/latest/{from_code}"
-        req = urllib.request.Request(url, headers={"User-Agent": "Jarvis/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "Vani/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if data.get("result") == "success":

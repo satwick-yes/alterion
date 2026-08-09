@@ -25,7 +25,7 @@ def _inference_search(query: str) -> str:
         return wrapper.generate_text(
             prompt=query,
             system_instruction="You are a web search comparison assistant. Be factual.",
-            provider="openrouter"
+            provider="deepseek"
         )
     except Exception as e:
         raise ValueError(f"Inference search failed: {e}")
@@ -113,22 +113,33 @@ def web_search(
         player.write_log(f"[Search] {query or ', '.join(items)}")
 
     print(f"[WebSearch] 🔍 Query: {query!r}  Mode: {mode}")
-# replace: result = _gemini_search(query) block with:
+    if mode == "compare":
+        return _compare(items, aspect)
+
     try:
-        from or_client import client
-        result = client.chat(
-            query,
-            system="You are a web search assistant. Answer factually and concisely."
-        )
-        print("[WebSearch] ✅ OpenRouter OK.")
-        return result
-    except Exception as e:
-        print(f"[WebSearch] ⚠️ OpenRouter failed ({e}) — trying DDG...")
+        # 1. Actually perform the web search FIRST
         results = _ddg_search(query)
-        result  = _format_ddg(query, results)
-        print(f"[WebSearch] ✅ DDG: {len(results)} result(s).")
+        search_context = _format_ddg(query, results)
+        
+        # 2. Use the LLM to synthesize a context-aware answer based on the search results
+        from core.inference_wrapper import InferenceWrapper
+        wrapper = InferenceWrapper()
+        
+        prompt = (
+            f"The user asked: '{query}'.\n\n"
+            f"Here are the live web search results:\n{search_context}\n\n"
+            f"Based on the search results above, provide a comprehensive, context-aware answer."
+        )
+        
+        result = wrapper.generate_text(
+            prompt=prompt,
+            system_instruction="You are a context-aware web search assistant. Synthesize the provided web search results to answer the user's query factually. If the search results do not contain the answer, state that clearly.",
+            provider="openai" # Use OpenAI (GPT-4o) for high-quality synthesis, or fallback to openrouter
+        )
+        print(f"[WebSearch] ✅ Search & Synthesis OK. ({len(results)} results found)")
         return result
-    
     except Exception as e:
-        print(f"[WebSearch] ❌ All backends failed: {e}")
+        print(f"[WebSearch] ⚠️ Synthesis failed ({e}) — returning raw DDG results...")
+        if 'results' in locals() and results:
+            return search_context
         return f"Search failed, sir: {e}"

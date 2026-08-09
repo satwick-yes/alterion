@@ -38,14 +38,15 @@ def _parse_intent(goal: str) -> dict:
     prompt = f"""
     You are an intent parser. The user wants to perform an action on their computer.
     Extract the 'app' (application name) and the 'action' (what they want to do).
+    If they want to TYPE or SEND text to an AI or search box, extract 'text_to_type'.
     If no specific app is mentioned, set 'app' to 'Windows'.
-    Return the result strictly as a valid JSON object with keys 'app' and 'action'.
+    Return the result strictly as a valid JSON object with keys 'app', 'action', and 'text_to_type' (null if none).
     
     Goal: {goal}
     """
     try:
         sys.path.insert(0, str(BASE_DIR))
-        from or_client import OpenRouterClient
+        from core.or_client import OpenRouterClient
         client = OpenRouterClient()
         return client.chat_json(prompt=prompt)
     except Exception as e:
@@ -121,7 +122,7 @@ def _find_button_with_openrouter(prompt: str, b64_image: str) -> Optional[str]:
     print("[VisionComputerUse] Asking OpenRouter Vision for ID...")
     try:
         sys.path.insert(0, str(BASE_DIR))
-        from or_client import OpenRouterClient
+        from core.or_client import OpenRouterClient
         client = OpenRouterClient()
         text = client.vision(
             prompt=prompt,
@@ -133,6 +134,23 @@ def _find_button_with_openrouter(prompt: str, b64_image: str) -> Optional[str]:
     except Exception as e:
         print(f"[VisionComputerUse] OpenRouter Vision failed: {e}")
         return None
+
+
+def _find_button_with_local_vision(prompt: str, b64_image: str) -> Optional[str]:
+    """Query a local lightweight vision model (e.g. Florence-2 via ONNX) on localhost:8080."""
+    print("[VisionComputerUse] Trying local vision endpoint (Florence-2)...")
+    try:
+        import requests
+        resp = requests.post("http://127.0.0.1:8080/vision", json={
+            "prompt": prompt,
+            "image": b64_image
+        }, timeout=3.0)
+        if resp.status_code == 200:
+            return _extract_id_from_text(resp.json().get("text", "").strip())
+    except Exception:
+        # Silently pass if local server is not running
+        pass
+    return None
 
 
 def _find_button_with_nvidia(prompt: str, b64_image: str) -> Optional[str]:
@@ -182,8 +200,9 @@ def _find_button_coordinates(goal: str) -> Optional[tuple[int, int]]:
     )
     
     element_id = None
-    if not element_id: element_id = _find_button_with_gemini(prompt, b64_image)
+    if not element_id: element_id = _find_button_with_local_vision(prompt, b64_image)
     if not element_id: element_id = _find_button_with_nvidia(prompt, b64_image)
+    if not element_id: element_id = _find_button_with_gemini(prompt, b64_image)
     if not element_id: element_id = _find_button_with_openrouter(prompt, b64_image)
     
     if element_id and element_id in mark_dict:
@@ -214,9 +233,37 @@ def _find_button_coordinates_grid(goal: str) -> Optional[tuple[int, int]]:
     text = None
     keys = _load_keys()
     
-    # Try Gemini First
+    # Try Local Vision First
+    print("[VisionComputerUse] Asking Local Vision (Florence-2) for Grid Coordinates...")
+    try:
+        import requests
+        resp = requests.post("http://127.0.0.1:8080/vision", json={
+            "prompt": prompt,
+            "image": b64_image
+        }, timeout=3.0)
+        if resp.status_code == 200:
+            text = resp.json().get("text", "").strip()
+    except Exception:
+        pass
+
+    # Try Nvidia Fallback
+    nvidia_key = keys.get("nvidia_api_key", "").strip()
+    if not text and nvidia_key:
+        print("[VisionComputerUse] Asking Nvidia Vision for Grid Coordinates...")
+        try:
+            import openai
+            client = openai.OpenAI(api_key=nvidia_key, base_url="https://integrate.api.nvidia.com/v1")
+            response = client.chat.completions.create(
+                model="meta/llama-3.2-90b-vision-instruct",
+                messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}]}]
+            )
+            text = response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"[VisionComputerUse] Nvidia Grid vision failed: {e}")
+
+    # Try Gemini Fallback
     gemini_key = keys.get("gemini_api_key", "").strip()
-    if gemini_key:
+    if not text and gemini_key:
         print("[VisionComputerUse] Asking Gemini Vision for Grid Coordinates...")
         try:
             from google import genai
@@ -233,28 +280,13 @@ def _find_button_coordinates_grid(goal: str) -> Optional[tuple[int, int]]:
             text = response.text.strip()
         except Exception as e:
             print(f"[VisionComputerUse] Gemini Grid vision failed: {e}")
-            
-    # Try Nvidia Fallback
-    nvidia_key = keys.get("nvidia_api_key", "").strip()
-    if not text and nvidia_key:
-        print("[VisionComputerUse] Asking Nvidia Vision for Grid Coordinates...")
-        try:
-            import openai
-            client = openai.OpenAI(api_key=nvidia_key, base_url="https://integrate.api.nvidia.com/v1")
-            response = client.chat.completions.create(
-                model="meta/llama-3.2-90b-vision-instruct",
-                messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}]}]
-            )
-            text = response.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"[VisionComputerUse] Nvidia Grid vision failed: {e}")
 
     # Try OpenRouter Fallback
     if not text:
         print("[VisionComputerUse] Asking OpenRouter Vision for Grid Coordinates...")
         try:
             sys.path.insert(0, str(BASE_DIR))
-            from or_client import OpenRouterClient
+            from core.or_client import OpenRouterClient
             client = OpenRouterClient()
             text = client.vision(prompt=prompt, image_b64=b64_image, mime="image/jpeg", system="Respond ONLY with X, Y coordinates.")
         except Exception as e:
@@ -326,6 +358,15 @@ def advanced_computer_use(parameters: dict, player=None, speak: Optional[Callabl
         time.sleep(0.1)
         pyautogui.click()
         
+        text_to_type = intent.get("text_to_type")
+        if text_to_type:
+            time.sleep(0.5)
+            print(f"[VisionComputerUse] Typing: {text_to_type}")
+            if speak: speak("Typing the request, sir.")
+            pyautogui.write(text_to_type, interval=0.02)
+            time.sleep(0.2)
+            pyautogui.press("enter")
+        
         # Self-correction validation
         print("[VisionComputerUse] Validating action success...")
         time.sleep(1.5) # Wait for UI to update
@@ -341,6 +382,8 @@ def advanced_computer_use(parameters: dict, player=None, speak: Optional[Callabl
         except:
             pass
             
+        if text_to_type:
+            return f"Visually located the target, clicked, and typed: '{text_to_type}'."
         return f"Visually located and clicked the target at ({x}, {y})."
     
     # 3. Fall back to keyboard shortcut

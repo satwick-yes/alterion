@@ -75,7 +75,7 @@ def free_api_query(
 
     # 3. Ask LLM to pick the API and formulate the URL endpoint and parameters
     prompt = f"""
-You are the API Routing Engine for Jarvis. The user wants to perform this action: "{query_description}".
+You are the API Routing Engine for Vani. The user wants to perform this action: "{query_description}".
 Below is a list of candidate APIs that might match this request:
 
 {json.dumps(candidates, indent=2)}
@@ -159,7 +159,7 @@ Response JSON format:
 
     # 5. Ask LLM to format the response into a spoken sentence
     summary_prompt = f"""
-You are Jarvis. You successfully queried the public API "{api_to_call}" to answer the user's request: "{query_description}".
+You are Vani. You successfully queried the public API "{api_to_call}" to answer the user's request: "{query_description}".
 
 The API returned the following raw response:
 {formatted_data}
@@ -188,6 +188,6 @@ Provide a polite, natural, and helpful spoken response summarizing the informati
 def _speak_and_log(message: str, player=None):
     if player:
         try:
-            player.write_log(f"JARVIS: {message}")
+            player.write_log(f"VANI: {message}")
         except Exception:
             pass

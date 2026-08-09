@@ -10,29 +10,40 @@ from agent.orchestrator import Companion
 logger = logging.getLogger("multi_agent")
 
 class WorkerBot:
-    def __init__(self, task_id: str, role: str, instruction: str, tool: str, args: Dict[str, Any]):
+    def __init__(self, task_id: str, role: str, instruction: str, tool: str, args: Dict[str, Any], assigned_provider: str = None):
         self.worker_id = str(uuid.uuid4())[:8]
         self.task_id = task_id
         self.role = role
         self.instruction = instruction
         self.tool = tool
         self.args = args
+        self.assigned_provider = assigned_provider
         self.result = ""
         self.status = "pending"
 
     async def execute(self):
         self.status = "running"
         state_manager.register_worker(self.worker_id, self.task_id, self.role)
-        logger.info(f"[WorkerBot {self.worker_id}] Starting task: {self.instruction}")
+        logger.info(f"[WorkerBot {self.worker_id}] Starting task: {self.instruction} with provider: {self.assigned_provider}")
         
         try:
             # Import call_tool dynamically from executor to avoid circular dependencies
             from agent.executor import _call_tool
             # Run the tool blocking call in a separate thread pool executor so it doesn't block the async loop
             loop = asyncio.get_event_loop()
+            
+            def _run_tool_with_context():
+                from core.inference_wrapper import _thread_local
+                if self.assigned_provider:
+                    _thread_local.override_provider = self.assigned_provider
+                else:
+                    _thread_local.override_provider = None
+                    
+                return _call_tool(self.tool, self.args, None)
+                
             result = await loop.run_in_executor(
                 None, 
-                lambda: _call_tool(self.tool, self.args, None)
+                _run_tool_with_context
             )
             self.result = result
             self.status = "completed"
@@ -108,14 +119,20 @@ class MultiAgentFramework:
                 model="gemini-3.1-flash-lite"
             )
             sub_tasks = response.get("sub_tasks", [])
+            
+            # Fetch active providers for round-robin assignment
+            active_providers = inference_client.get_active_providers()
+            
             workers = []
-            for st in sub_tasks:
+            for i, st in enumerate(sub_tasks):
+                assigned_provider = active_providers[i % len(active_providers)]
                 workers.append(WorkerBot(
                     task_id=task_id,
                     role=st.get("role", "WorkerBot"),
                     instruction=st.get("instruction", ""),
                     tool=st.get("tool", "web_search"),
-                    args=st.get("args", {})
+                    args=st.get("args", {}),
+                    assigned_provider=assigned_provider
                 ))
             return workers
         except Exception as e:
@@ -126,7 +143,8 @@ class MultiAgentFramework:
                 role="Fallback Searcher",
                 instruction=f"Research: {goal}",
                 tool="web_search",
-                args={"query": goal}
+                args={"query": goal},
+                assigned_provider="gemini"
             )]
 
     async def execute_complex_task(self, task_id: str, goal: str, companion: Companion) -> str:

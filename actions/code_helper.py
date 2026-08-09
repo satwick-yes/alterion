@@ -50,10 +50,10 @@ def _get_model():
                     sys.path.append(str(base))
                 from core.inference_wrapper import InferenceWrapper
                 wrapper = InferenceWrapper()
-                res = wrapper.generate_text(prompt=prompt, provider="openai")
+                res = wrapper.generate_text(prompt=prompt, provider="deepseek")
                 return Response(res)
             except Exception as e:
-                print(f"[Code] ⚠️ OpenAI failed, falling back to Gemini: {e}")
+                print(f"[Code] ⚠️ DeepSeek failed, falling back to Gemini: {e}")
                 from core.inference_wrapper import InferenceWrapper
                 wrapper = InferenceWrapper()
                 res = wrapper.generate_text(prompt=prompt, provider="gemini")
@@ -79,10 +79,10 @@ def _resolve_save_path(output_path: str, language: str) -> Path:
         "sql": ".sql", "json": ".json", "rust": ".rs", "go": ".go",
     }
     if output_path:
-        p = Path(output_path)
-        return p if p.is_absolute() else DESKTOP / p
+        from actions.file_controller import _resolve_path
+        return _resolve_path(output_path)
     ext = ext_map.get((language or "python").lower(), ".py")
-    return DESKTOP / f"jarvis_code{ext}"
+    return DESKTOP / f"vani_code{ext}"
 
 
 def _read_file(file_path: str) -> tuple[str, str]:
@@ -128,7 +128,7 @@ def _has_error(output: str) -> bool:
 def _take_screenshot() -> Path | None:
     try:
         import pyautogui
-        screenshot_path = Path.home() / "Desktop" / f"jarvis_debug_{int(time.time())}.png"
+        screenshot_path = Path.home() / "Desktop" / f"vani_debug_{int(time.time())}.png"
         screenshot = pyautogui.screenshot()
         screenshot.save(str(screenshot_path))
         print(f"[Code] 📸 Screenshot: {screenshot_path}")

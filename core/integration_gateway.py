@@ -25,26 +25,31 @@ class IntegrationGateway:
                 "computer_control", "desktop_control", "system_shell", 
                 "advanced_computer_use", "mobile_control", 
                 "cmd_control", "game_updater", "browser_control", "screen_process", "agent_task", "send_message", "virtual_hand_control",
-                "delegate_to_operator"
+                "delegate_to_operator", "enter_serious_mode", "enter_normal_mode", "enter_standby_mode", "mcp_execute", "memorize_fact"
             ],
             "Research Agent": [
                 "web_search", "weather_report", "flight_finder", 
                 "youtube_video", "free_api_query", "virtual_hand_control",
-                "delegate_to_researcher"
+                "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "mcp_execute"
             ],
             "Developer Agent": [
                 "code_helper", "dev_agent", "system_shell", "file_controller", "agent_task", "virtual_hand_control",
-                "delegate_to_developer", "save_file", "find_file"
+                "delegate_to_developer", "save_file", "find_file", "github_control", "memorize_fact", "mcp_execute"
             ],
             "Creator Agent": [
                 "file_processor", "create_presentation", "create_report", 
                 "generate_image", "send_message", "reminder", "virtual_hand_control",
-                "delegate_to_creator", "save_file", "find_file"
+                "delegate_to_creator", "save_file", "find_file", "transcribe_audio", "memorize_fact", "mcp_execute"
             ],
             "LLM Brain Manager": [
                 "delegate_to_gemini_brain", "delegate_to_openrouter_brain",
                 "delegate_to_nvidia_brain", "delegate_to_openai_brain",
-                "delegate_to_groq_brain", "delegate_to_deepseek_brain"
+                "delegate_to_groq_brain", "delegate_to_deepseek_brain",
+                "delegate_to_cerebras_brain", "delegate_to_mistral_brain", 
+                "delegate_to_sambanova_brain", "hf_specialist"
+            ],
+            "3D Architect": [
+                "delegate_to_3d_architect"
             ]
         }
 

@@ -81,26 +81,28 @@ def _is_running(app_name: str) -> bool:
 
 
 def _launch_windows(app_name: str, url: str = "") -> bool:
-    if url:
-        try:
-            cmd = ["cmd", "/c", "start", ""]
-            if "private" in app_name.lower() or "incognito" in app_name.lower():
-                if "chrome" in app_name.lower():
-                    cmd.extend(["chrome", "-incognito", url])
-                elif "edge" in app_name.lower():
-                    cmd.extend(["msedge", "-inprivate", url])
-                elif "firefox" in app_name.lower():
-                    cmd.extend(["firefox", "-private-window", url])
-                elif "brave" in app_name.lower():
-                    cmd.extend(["brave", "-incognito", url])
-                else:
-                    cmd.extend([app_name, url])
+    try:
+        cmd = ["cmd", "/c", "start", ""]
+        if "private" in app_name.lower() or "incognito" in app_name.lower():
+            if "chrome" in app_name.lower():
+                cmd.extend(["chrome", "-incognito", url] if url else ["chrome", "-incognito"])
+            elif "edge" in app_name.lower():
+                cmd.extend(["msedge", "-inprivate", url] if url else ["msedge", "-inprivate"])
+            elif "firefox" in app_name.lower():
+                cmd.extend(["firefox", "-private-window", url] if url else ["firefox", "-private-window"])
+            elif "brave" in app_name.lower():
+                cmd.extend(["brave", "-incognito", url] if url else ["brave", "-incognito"])
             else:
-                cmd.extend([app_name, url])
-            subprocess.run(cmd, timeout=5)
+                cmd.extend([app_name, url] if url else [app_name])
+        else:
+            cmd.extend([app_name, url] if url else [app_name])
+        
+        result = subprocess.run(cmd, capture_output=True, timeout=5)
+        if result.returncode == 0:
+            time.sleep(1.0)
             return True
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     try:
         import pyautogui

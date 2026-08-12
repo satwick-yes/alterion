@@ -306,25 +306,67 @@ def _open_vscode(project_dir: Path) -> bool:
             continue
     return False
 
+def _test_html_with_playwright(html_file_path: Path) -> tuple[str, str]:
+    import time
+    from playwright.sync_api import sync_playwright
+    
+    stdout_msgs = []
+    stderr_msgs = []
+    
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            
+            def on_console(msg):
+                if msg.type == "error":
+                    stderr_msgs.append(f"Console Error: {msg.text}")
+                else:
+                    stdout_msgs.append(f"Console Log: {msg.text}")
+            page.on("console", on_console)
+            
+            def on_page_error(exc):
+                # Using getattr to safely access message and stack just in case
+                msg = getattr(exc, "message", str(exc))
+                stack = getattr(exc, "stack", "")
+                stderr_msgs.append(f"Page Error: {msg}\n{stack}")
+            page.on("pageerror", on_page_error)
+            
+            page.goto(f"file://{html_file_path.absolute()}")
+            time.sleep(2) # Wait for startup scripts to execute
+            
+            browser.close()
+    except Exception as e:
+        stderr_msgs.append(f"Playwright Exception: {str(e)}")
+        
+    return "\n".join(stdout_msgs), "\n".join(stderr_msgs)
+
 def _run_project(run_command: str, project_dir: Path, timeout: int = 30) -> str:
     print(f"[DevAgent] 🚀 Running: {run_command}")
     try:
         parts = run_command.split()
-        if parts[0].lower() == "python":
-            parts[0] = sys.executable
+        if parts[0].lower() == "start" and len(parts) > 1 and parts[1].endswith(".html"):
+            html_file = project_dir / parts[1]
+            if html_file.exists():
+                print(f"[DevAgent] 🌐 Intercepted HTML run command. Launching headless Playwright test...")
+                stdout, stderr = _test_html_with_playwright(html_file)
+            else:
+                stdout, stderr = "", f"HTML file not found: {html_file}"
+        else:
+            if parts[0].lower() == "python":
+                parts[0] = sys.executable
 
-        is_shell = parts[0].lower() in ("start", "npm", "npx", "npx.cmd", "npm.cmd")
-        result = subprocess.run(
-            run_command if is_shell else parts,
-            shell=is_shell,
-            capture_output=True, text=True,
-            encoding="utf-8", errors="replace",
-            timeout=timeout,
-            cwd=str(project_dir)
-        )
-
-        stdout = result.stdout.strip()
-        stderr = result.stderr.strip()
+            is_shell = parts[0].lower() in ("start", "npm", "npx", "npx.cmd", "npm.cmd")
+            result = subprocess.run(
+                run_command if is_shell else parts,
+                shell=is_shell,
+                capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+                timeout=timeout,
+                cwd=str(project_dir)
+            )
+            stdout = result.stdout.strip()
+            stderr = result.stderr.strip()
 
         combined_parts = []
         if stdout:

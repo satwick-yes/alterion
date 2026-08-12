@@ -32,11 +32,17 @@ from PyQt6.QtWebChannel import QWebChannel
 
 from actions.gesture_controller import GestureController
 
+def _asset_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent.parent
+
 def _base_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
     return Path(__file__).resolve().parent.parent
 
+ASSET_DIR  = _asset_dir()
 BASE_DIR   = _base_dir()
 CONFIG_DIR = BASE_DIR / "config"
 API_FILE   = CONFIG_DIR / "api_keys.json"
@@ -277,7 +283,7 @@ class HudCanvas(QWebEngineView):
         self._mic_level = 0.0
 
         # Load local HTML visualizer file
-        html_path = BASE_DIR / "core" / "visualizer.html"
+        html_path = ASSET_DIR / "core" / "visualizer.html"
         self.setUrl(QUrl.fromLocalFile(str(html_path.resolve())))
         
         # Grant permissions and capabilities for media access in WebEngine
@@ -705,7 +711,7 @@ class _DropCanvas(QWidget):
 
 
 class SetupOverlay(QWidget):
-    done = pyqtSignal(str, str, str, str, str, str, str)
+    done = pyqtSignal(dict, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -723,7 +729,18 @@ class SetupOverlay(QWidget):
         )
         self._sel_os = detected
 
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        scroll.setWidget(container)
+
+        layout = QVBoxLayout(container)
         layout.setContentsMargins(30, 22, 30, 22)
         layout.setSpacing(8)
 
@@ -744,106 +761,41 @@ class SetupOverlay(QWidget):
         sep.setStyleSheet(f"color: {C.BORDER};"); layout.addWidget(sep)
         layout.addSpacing(4)
 
-        layout.addWidget(_lbl("GEMINI API KEY", 8, color=C.TEXT_DIM,
-                               align=Qt.AlignmentFlag.AlignLeft))
-        self._key_input = QLineEdit()
-        self._key_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._key_input.setPlaceholderText("AIza…")
-        self._key_input.setFont(QFont("Courier New", 10))
-        self._key_input.setFixedHeight(32)
-        self._key_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.PRI}; }}
-        """)
-        layout.addWidget(self._key_input)
-        layout.addSpacing(8)
+        self._inputs = {}
+        api_keys = [
+            ("GEMINI", "gemini_api_key", "AIza…"),
+            ("OPENROUTER", "openrouter_api_key", "sk-or-…"),
+            ("OPENAI", "openai_api_key", "sk-proj-…"),
+            ("NVIDIA", "nvidia_api_key", "nvapi-…"),
+            ("GROQ", "groq_api_key", "gsk_…"),
+            ("DEEPSEEK", "deepseek_api_key", "sk-…"),
+            ("CEREBRAS", "cerebras_api_key", "…"),
+            ("MISTRAL AI", "mistral_api_key", "…"),
+            ("COHERE", "cohere_api_key", "…"),
+            ("EDEN AI", "eden_api_key", "…"),
+            ("HUGGING FACE", "huggingface_api_key", "hf_…"),
+            ("SAMBANOVA", "sambanova_api_key", "…"),
+            ("CLOUDFLARE", "cloudflare_api_key", "…"),
+            ("GITHUB", "github_api_key", "ghp_…")
+        ]
 
-        layout.addWidget(_lbl("OPENROUTER API KEY", 8, color=C.TEXT_DIM,
-                       align=Qt.AlignmentFlag.AlignLeft))
-        self._or_input = QLineEdit()
-        self._or_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._or_input.setPlaceholderText("sk-or-…")
-        self._or_input.setFont(QFont("Courier New", 10))
-        self._or_input.setFixedHeight(32)
-        self._or_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
-        """)
-        layout.addWidget(self._or_input)
-        layout.addSpacing(8)
-
-        layout.addWidget(_lbl("OPENAI API KEY", 8, color=C.TEXT_DIM,
-                       align=Qt.AlignmentFlag.AlignLeft))
-        self._openai_input = QLineEdit()
-        self._openai_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._openai_input.setPlaceholderText("sk-proj-…")
-        self._openai_input.setFont(QFont("Courier New", 10))
-        self._openai_input.setFixedHeight(32)
-        self._openai_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
-        """)
-        layout.addWidget(self._openai_input)
-        layout.addSpacing(8)
-
-        layout.addWidget(_lbl("NVIDIA API KEY", 8, color=C.TEXT_DIM,
-                       align=Qt.AlignmentFlag.AlignLeft))
-        self._nvidia_input = QLineEdit()
-        self._nvidia_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._nvidia_input.setPlaceholderText("nvapi-…")
-        self._nvidia_input.setFont(QFont("Courier New", 10))
-        self._nvidia_input.setFixedHeight(32)
-        self._nvidia_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
-        """)
-        layout.addWidget(self._nvidia_input)
-        layout.addSpacing(8)
-
-        layout.addWidget(_lbl("GROQ API KEY", 8, color=C.TEXT_DIM,
-                       align=Qt.AlignmentFlag.AlignLeft))
-        self._groq_input = QLineEdit()
-        self._groq_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._groq_input.setPlaceholderText("gsk_…")
-        self._groq_input.setFont(QFont("Courier New", 10))
-        self._groq_input.setFixedHeight(32)
-        self._groq_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
-        """)
-        layout.addWidget(self._groq_input)
-        layout.addSpacing(8)
-
-        layout.addWidget(_lbl("DEEPSEEK API KEY", 8, color=C.TEXT_DIM,
-                       align=Qt.AlignmentFlag.AlignLeft))
-        self._deepseek_input = QLineEdit()
-        self._deepseek_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._deepseek_input.setPlaceholderText("sk-…")
-        self._deepseek_input.setFont(QFont("Courier New", 10))
-        self._deepseek_input.setFixedHeight(32)
-        self._deepseek_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: #000d12; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
-            }}
-            QLineEdit:focus {{ border: 1px solid {C.ACC2}; }}
-        """)
-        layout.addWidget(self._deepseek_input)
+        for label, key_name, placeholder in api_keys:
+            layout.addWidget(_lbl(f"{label} API KEY", 8, color=C.TEXT_DIM, align=Qt.AlignmentFlag.AlignLeft))
+            inp = QLineEdit()
+            inp.setEchoMode(QLineEdit.EchoMode.Password)
+            inp.setPlaceholderText(placeholder)
+            inp.setFont(QFont("Courier New", 10))
+            inp.setFixedHeight(32)
+            inp.setStyleSheet(f"""
+                QLineEdit {{
+                    background: #000d12; color: {C.TEXT};
+                    border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
+                }}
+                QLineEdit:focus {{ border: 1px solid {C.PRI}; }}
+            """)
+            layout.addWidget(inp)
+            layout.addSpacing(8)
+            self._inputs[key_name] = inp
 
         layout.addSpacing(12)
 
@@ -887,6 +839,8 @@ class SetupOverlay(QWidget):
         init_btn.clicked.connect(self._submit)
         layout.addWidget(init_btn)
 
+        main_layout.addWidget(scroll)
+
     def _sel(self, key: str):
         self._sel_os = key
         pal = {"windows":(C.PRI,"#001a22"),"mac":(C.ACC2,"#1a1400"),"linux":(C.GREEN,"#001a0d")}
@@ -909,27 +863,23 @@ class SetupOverlay(QWidget):
                 """)
 
     def _submit(self):
-        key = self._key_input.text().strip()
-        or_key = self._or_input.text().strip()
-        openai_key = self._openai_input.text().strip()
-        nvidia_key = self._nvidia_input.text().strip()
-        groq_key = getattr(self, "_groq_input", None).text().strip() if hasattr(self, "_groq_input") else ""
-        deepseek_key = getattr(self, "_deepseek_input", None).text().strip() if hasattr(self, "_deepseek_input") else ""
+        keys = {k: v.text().strip() for k, v in self._inputs.items()}
         
-        # We can make them optional or required, but to keep it simple, we just pass them.
-        if not key:
-            self._key_input.setStyleSheet(
-                self._key_input.styleSheet() +
-                f" QLineEdit {{ border: 1px solid {C.RED}; }}"
-            )
+        # Highlight required keys if missing
+        missing = False
+        if not keys["gemini_api_key"]:
+            inp = self._inputs["gemini_api_key"]
+            inp.setStyleSheet(inp.styleSheet() + f" QLineEdit {{ border: 1px solid {C.RED}; }}")
+            missing = True
+        if not keys["openrouter_api_key"]:
+            inp = self._inputs["openrouter_api_key"]
+            inp.setStyleSheet(inp.styleSheet() + f" QLineEdit {{ border: 1px solid {C.RED}; }}")
+            missing = True
+            
+        if missing:
             return
-        if not or_key:
-            self._or_input.setStyleSheet(
-                self._or_input.styleSheet() +
-                f" QLineEdit {{ border: 1px solid {C.RED}; }}"
-            )
-            return
-        self.done.emit(key, or_key, openai_key, nvidia_key, groq_key, deepseek_key, self._sel_os)
+            
+        self.done.emit(keys, self._sel_os)
 
 
 class MainWindow(QMainWindow):
@@ -1433,18 +1383,11 @@ class MainWindow(QMainWindow):
         self._overlay = ov
 
     # Change signature:
-    def _on_setup_done(self, key: str, or_key: str, openai_key: str, nvidia_key: str, groq_key: str, deepseek_key: str, os_name: str):
+    def _on_setup_done(self, keys: dict, os_name: str):
         os.makedirs(CONFIG_DIR, exist_ok=True)
+        keys["os_system"] = os_name
         API_FILE.write_text(
-            json.dumps({
-                "gemini_api_key":    key,
-                "openrouter_api_key": or_key,
-                "openai_api_key": openai_key,
-                "nvidia_api_key": nvidia_key,
-                "groq_api_key": groq_key,
-                "deepseek_api_key": deepseek_key,
-                "os_system":         os_name,
-            }, indent=4),
+            json.dumps(keys, indent=4),
             encoding="utf-8",
         )
         self._ready = True

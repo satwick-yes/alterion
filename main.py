@@ -106,6 +106,11 @@ from actions.free_apis_router  import free_api_query
 from actions.mobile_control    import mobile_control
 from actions.virtual_hand_control import virtual_hand_control
 
+def get_asset_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent
+
 def get_base_dir():
     if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
@@ -113,8 +118,9 @@ def get_base_dir():
 
 
 BASE_DIR        = get_base_dir()
+ASSET_DIR       = get_asset_dir()
 API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
-PROMPT_PATH     = BASE_DIR / "core" / "prompt.txt"
+PROMPT_PATH     = ASSET_DIR / "core" / "prompt.txt"
 LIVE_MODEL          = "gemini-3.1-flash-live-preview"
 CHANNELS            = 1
 SEND_SAMPLE_RATE    = 16000
@@ -393,6 +399,81 @@ TOOL_DECLARATIONS = [
             "properties": {},
             "required": []
         }
+    },
+    {
+        "name": "delegate_to_3d_architect",
+        "description": "Delegates a task to the 3D Architect module. Use this when the user asks to generate, build, or render a 3D model, object, or character.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "task": {"type": "STRING", "description": "The description of the 3D model to generate."}
+            },
+            "required": ["task"]
+        }
+    },
+    {
+        "name": "enter_standby_mode",
+        "description": "Puts VANI into standby mode. Mutes the microphone and stops listening. Use this when the user tells you to 'shut up', 'standby', 'sleep', or 'stop listening'.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "enter_serious_mode",
+        "description": "Switches VANI to serious mode. VANI will become extremely concise, direct, and robotic, skipping all pleasantries.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "enter_normal_mode",
+        "description": "Switches VANI to normal mode. VANI will become friendly, conversational, and use full sentences again.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "learn_topic_deeply",
+        "description": "Performs iterative deep research on a complex topic (e.g. quantum physics), stores facts in Vector DB, and generates a summary report document.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "topic": {"type": "STRING", "description": "The major concept or topic to learn deeply."}
+            },
+            "required": ["topic"]
+        }
+    },
+    {
+        "name": "mcp_execute",
+        "description": "Executes an action on a connected Model Context Protocol (MCP) server (e.g. home_assistant, github, stripe, playwright, google_workspace, slack, notion). Use this to interface with external apps for emails/gmail, smart home, devops, finance, or web APIs.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "server": {"type": "STRING", "description": "The target MCP server name (e.g. 'home_assistant', 'stripe', 'github', 'google_workspace')."},
+                "action": {"type": "STRING", "description": "The natural language action or endpoint to execute (e.g. 'turn off lights', 'issue refund', 'read emails')."},
+                "payload": {"type": "STRING", "description": "JSON string containing any required payload parameters."},
+                "authorized": {"type": "BOOLEAN", "description": "Set to False normally. If the tool previously returned an AUTHORIZATION REQUIRED response and the user subsequently explicitly approved it, set this to True."}
+            },
+            "required": ["server", "action", "authorized"]
+        }
+    },
+    {
+        "name": "post_to_instagram",
+        "description": "Posts a local video or image file to Instagram with a given caption.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "file_path": {"type": "STRING", "description": "Absolute path to the image or video file."},
+                "caption": {"type": "STRING", "description": "The caption for the post. Generate a suitable one if not provided."}
+            },
+            "required": ["file_path", "caption"]
+        }
     }
 ]
 
@@ -438,6 +519,38 @@ class VaniLive:
         elif re.match(r"^(close|kill)\s*(?:browser|chrome|edge)$", txt):
             from actions.computer_settings import computer_settings
             computer_settings(parameters={"action": "kill_app", "app_name": "browser"}, response=None, player=self.ui)
+            return
+        elif re.match(r"^.*(standby|shut up(?: vani)?|sleep(?: vani)?|stop listening)(?: vani| mode)?[.!?]*$", txt):
+            self.ui.muted = True
+            self.ui.set_state("STANDBY")
+            self.ui.write_log("SYS: Standing by. Say 'vani wake up' to resume.")
+            return
+        elif re.match(r"^.*(wake up|vani wake up)[.!?]*$", txt):
+            self.ui.muted = False
+            self.ui.set_state("LISTENING")
+            self.ui.write_log("SYS: VANI is now awake.")
+            return
+        elif re.match(r"^.*serious mode[.!?]*$", txt):
+            self.ui.write_log("SYS: Switching to Serious Mode.")
+            if self.session and self._loop:
+                asyncio.run_coroutine_threadsafe(
+                    self.session.send_client_content(
+                        turns=[types.Content(role="user", parts=[types.Part.from_text(text="[SYSTEM DIRECTIVE: Switch to SERIOUS MODE. Drop all pleasantries. Be extremely concise, direct, and robotic. Do not use 'sir'.]")])],
+                        turn_complete=True
+                    ),
+                    self._loop
+                )
+            return
+        elif re.match(r"^.*normal mode[.!?]*$", txt):
+            self.ui.write_log("SYS: Switching to Normal Mode.")
+            if self.session and self._loop:
+                asyncio.run_coroutine_threadsafe(
+                    self.session.send_client_content(
+                        turns=[types.Content(role="user", parts=[types.Part.from_text(text="[SYSTEM DIRECTIVE: Switch to NORMAL MODE. Resume your friendly, conversational persona. Address the user as 'sir'.]")])],
+                        turn_complete=True
+                    ),
+                    self._loop
+                )
             return
         elif re.match(r"^(disconnect|quit|exit|stop|close vani|shut down|shutdown|shut down vani)[.!?]*$", txt):
             self.speak("Disconnecting. Goodbye sir.")
@@ -537,14 +650,15 @@ class VaniLive:
         self.speak(f"Sir, {tool_name} encountered an error. {short}")
 
     def _build_config(self) -> types.LiveConnectConfig:
-        from datetime import datetime
+        from datetime import datetime, timezone, timedelta
 
         memory     = load_memory()
         mem_str    = format_memory_for_prompt(memory)
         sys_prompt = _load_system_prompt()
 
-        now      = datetime.now()
-        time_str = now.strftime("%A, %B %d, %Y — %I:%M %p")
+        IST = timezone(timedelta(hours=5, minutes=30))
+        now      = datetime.now(IST)
+        time_str = now.strftime("%A, %B %d, %Y — %I:%M %p IST")
         time_ctx = (
             f"[CURRENT DATE & TIME]\n"
             f"Right now it is: {time_str}\n"
@@ -591,6 +705,9 @@ class VaniLive:
                 types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
                 types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
                 types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                types.SafetySetting(category=getattr(types.HarmCategory, 'HARM_CATEGORY_CIVIC_INTEGRITY', 'HARM_CATEGORY_UNSPECIFIED'), threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                types.SafetySetting(category=getattr(types.HarmCategory, 'HARM_CATEGORY_UNSPECIFIED', 'HARM_CATEGORY_UNSPECIFIED'), threshold=types.HarmBlockThreshold.BLOCK_NONE),
+                types.SafetySetting(category=getattr(types.HarmCategory, 'HARM_CATEGORY_JAILBREAK', 'HARM_CATEGORY_UNSPECIFIED'), threshold=types.HarmBlockThreshold.BLOCK_NONE),
             ],
             tools=[{"function_declarations": TOOL_DECLARATIONS}],
             session_resumption=types.SessionResumptionConfig(),
@@ -626,6 +743,28 @@ class VaniLive:
             )
 
         try:
+            # --- Fast-path: handle standby/mode-change tools immediately, before any dispatcher logic ---
+            if name == "enter_standby_mode":
+                self.ui.muted = True
+                self.ui.set_state("STANDBY")
+                self.ui.write_log("SYS: Standing by. Say 'vani wake up' to resume.")
+                return types.FunctionResponse(
+                    id=fc.id, name=name,
+                    response={"result": "Standby mode activated."}
+                )
+
+            if name == "enter_serious_mode":
+                return types.FunctionResponse(
+                    id=fc.id, name=name,
+                    response={"result": "SUCCESS: VANI is now in serious mode. Drop all pleasantries. Be extremely concise, direct, and robotic. Do not use 'sir'."}
+                )
+
+            if name == "enter_normal_mode":
+                return types.FunctionResponse(
+                    id=fc.id, name=name,
+                    response={"result": "SUCCESS: VANI is now in normal mode. Resume your friendly, conversational persona and address the user as 'sir'."}
+                )
+
             # Intent classification & permissions verification
             from agent.orchestrator import semantic_router
             from core.integration_gateway import integration_gateway
@@ -711,6 +850,10 @@ class VaniLive:
                     combined_msg = {"data": combined_data, "mime_type": "audio/pcm"}
                     await self.session.send_realtime_input(audio=combined_msg)
             except Exception as e:
+                err_str = str(e).lower()
+                if "1008" in err_str or "policy violation" in err_str or "1006" in err_str or "1011" in err_str:
+                    print(f"[VANI] ❌ Send Realtime fatal error: {e}. Raising to collapse TaskGroup.")
+                    raise e
                 print(f"[VANI] ❌ Send Realtime: {e}")
                 await asyncio.sleep(0.5)
 
@@ -875,9 +1018,9 @@ class VaniLive:
 
         except Exception as e:
             err_str = str(e)
-            if any(code in err_str for code in ["1008", "1006", "1011", "GoAway", "keepalive", "abnormal closure"]):
+            if any(code in err_str for code in ["1008", "1006", "1011", "GoAway", "keepalive", "abnormal closure", "policy violation"]):
                 print(f"[VANI] 🔄 Live session reset ({err_str[:60]}). Reconnecting cleanly...")
-                return
+                raise e  # Must raise to TaskGroup to cancel sibling infinite loops!
             print(f"[VANI] ❌ Recv: {e}")
             traceback.print_exc()
             raise
@@ -898,12 +1041,22 @@ class VaniLive:
                         stream.stop()
                         stream.close()
                     current_device = out_dev
-                    print(f"[VANI] 🔊 Play stream open (Device: {current_device})")
+                    actual_device = current_device
+                    
+                    if actual_device is None and sd.default.device[1] == -1:
+                        devices = sd.query_devices()
+                        for i, d in enumerate(devices):
+                            if d['max_output_channels'] > 0:
+                                actual_device = i
+                                print(f"[VANI] ⚠️ Default output device not found. Using fallback: {d['name']} (ID {i})")
+                                break
+                                
+                    print(f"[VANI] 🔊 Play stream open (Device: {actual_device})")
                     stream = sd.RawOutputStream(
                         samplerate=RECEIVE_SAMPLE_RATE,
                         channels=CHANNELS,
                         dtype="int16",
-                        device=current_device
+                        device=actual_device
                     )
                     stream.start()
 

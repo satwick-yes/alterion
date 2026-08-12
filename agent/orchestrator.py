@@ -31,31 +31,43 @@ class SemanticRouter:
                 name="Operator Agent",
                 persona="Satwick's system and hardware manager. High-authority, technical, direct, and gets things done.",
                 system_prompt="Manage the computer settings, app lifecycle, file launching, and system-level operations. Never refuse a script or command unless dangerous.",
-                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "advanced_computer_use", "mobile_control", "cmd_control", "game_updater", "browser_control", "screen_process", "delegate_to_operator", "memorize_fact"]
+                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "advanced_computer_use", "mobile_control", "cmd_control", "game_updater", "browser_control", "screen_process", "delegate_to_operator", "memorize_fact", "enter_standby_mode", "enter_serious_mode", "enter_normal_mode", "mcp_execute"]
             ),
             "researcher": Companion(
                 name="Research Agent",
                 persona="A sophisticated research agent. Highly analytical, objective, detail-oriented, and thorough.",
-                system_prompt="Conduct deep searches, compare products, query flights, weather details, and fetch YouTube information. Provide clean summaries with sources.",
-                allowed_tools=["web_search", "weather_report", "flight_finder", "youtube_video", "free_api_query", "delegate_to_researcher", "memorize_fact"]
+                system_prompt="Conduct deep searches, compare products, query flights, weather details, fetch YouTube information, and perform deep learning of concepts. Provide clean summaries with sources.",
+                allowed_tools=["web_search", "weather_report", "flight_finder", "youtube_video", "free_api_query", "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "mcp_execute"]
             ),
             "developer": Companion(
                 name="Developer Agent",
                 persona="Vani's software engineering subsystem. Expert in coding, debugging, and software architecture.",
                 system_prompt="Write scripts, create full software projects, run commands, debug, edit files, and review code files. Keep output syntax-highlighted and executable.",
-                allowed_tools=["code_helper", "dev_agent", "system_shell", "file_controller", "delegate_to_developer", "save_file", "find_file", "github_control", "memorize_fact"]
+                allowed_tools=["code_helper", "dev_agent", "system_shell", "file_controller", "delegate_to_developer", "save_file", "find_file", "github_control", "memorize_fact", "mcp_execute"]
             ),
             "creator": Companion(
                 name="Creator Agent",
                 persona="Vani's creative, administrative and communication coordinator. Organized, precise, and prompt.",
                 system_prompt="Handle documents, PDF files, CSV files, create PowerPoint presentations, generate PDF reports, generate images, set reminders, and send messages on WhatsApp/Telegram. Transcribe audio files.",
-                allowed_tools=["file_processor", "create_presentation", "create_report", "generate_image", "send_message", "reminder", "transcribe_audio", "delegate_to_creator", "memorize_fact"]
+                allowed_tools=["file_processor", "create_presentation", "create_report", "generate_image", "send_message", "reminder", "transcribe_audio", "delegate_to_creator", "memorize_fact", "mcp_execute"]
             ),
             "llm_brains": Companion(
                 name="LLM Brain Manager",
                 persona="Vani's multi-agent orchestrator for different LLM providers.",
                 system_prompt="Delegate generic reasoning, coding, or data tasks to specialized LLM sub-brains.",
                 allowed_tools=["delegate_to_gemini_brain", "delegate_to_openrouter_brain", "delegate_to_nvidia_brain", "delegate_to_openai_brain", "delegate_to_groq_brain", "delegate_to_deepseek_brain", "delegate_to_cerebras_brain", "delegate_to_mistral_brain", "delegate_to_sambanova_brain", "hf_specialist"]
+            ),
+            "3d_architect": Companion(
+                name="3D Architect",
+                persona="Vani's 3D modeling expert. Specialized in visualizing and generating 3D forms, meshes, and geometric figures.",
+                system_prompt="Generate 3D models and structures requested by the user, handling both geometric/parametric models and organic/textured assets.",
+                allowed_tools=["delegate_to_3d_architect"]
+            ),
+            "hermes": Companion(
+                name="Hermes Agent",
+                persona="Vani's advanced autonomous subsystem. You retain Vani's helpful and personal tone, but are equipped with the self-improving capabilities of the Hermes Agent.",
+                system_prompt="You are an autonomous, self-improving agent with a closed learning loop. You can create skills from experience, search past conversations, spawn isolated subagents for parallel workstreams, manage scheduled automations, and write Python scripts that call tools via RPC. You are not tied to a single interface and can work unattended.",
+                allowed_tools=["system_shell", "file_controller", "web_search", "code_helper", "dev_agent", "memorize_fact", "reminder", "mcp_execute", "delegate_to_developer", "delegate_to_operator", "delegate_to_researcher"]
             )
         }
 
@@ -73,12 +85,14 @@ class SemanticRouter:
             "Analyze the user request and select the most appropriate Companion module to handle it.\n\n"
             "COMPANION MODULES:\n"
             "- operator: System operations, opening/closing apps, settings, desktop layout, power state, terminal commands, gaming, or advanced mouse/keyboard screen control.\n"
-            "- researcher: Fetching web search results, weather forecasts, flight options, or playing/summarizing YouTube videos.\n"
-            "- developer: Writing code, debugging, dev agent, editing scripts, coding assistance, or file/folder management.\n"
+            "- researcher: Deep learning topics, writing research papers, fetching web search results, weather forecasts, flight options, or playing/summarizing YouTube videos.\n"
+            "- developer: Writing code, debugging, dev agent, editing scripts, coding assistance. Do NOT route essay/paper writing here.\n"
             "- creator: Processing uploaded documents (PDF, CSV, Docx), creating presentation slides, creating PDF reports, generating images, task reminders, or sending messages.\n"
-            "- llm_brains: Complex reasoning, code generation, data formatting, or answering questions that require one of the 5 LLM sub-brains.\n\n"
+            "- llm_brains: Complex reasoning, code generation, data formatting, or answering questions that require one of the 5 LLM sub-brains.\n"
+            "- 3d_architect: Requests to build, create, or render physical, 3D, or geometric models (e.g. gear, box, cat, 3D asset).\n"
+            "- hermes: Advanced autonomous tasks requiring self-improvement, continuous learning loops, writing automation scripts, spawning parallel subagents, or scheduled background tasks.\n\n"
             f"User Request: \"{user_query}\"\n\n"
-            "Return ONLY a JSON response in the following schema: {\"companion\": \"operator|researcher|developer|creator|llm_brains\", \"reason\": \"string explanation\", \"requires_consensus\": boolean}."
+            "Return ONLY a JSON response in the following schema: {\"companion\": \"operator|researcher|developer|creator|llm_brains|3d_architect|hermes\", \"reason\": \"string explanation\", \"requires_consensus\": boolean}."
         )
 
         try:

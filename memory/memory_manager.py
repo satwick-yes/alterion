@@ -187,7 +187,10 @@ def extract_memory(user_text: str, vani_text: str, api_key: str = "") -> dict:
     try:
         from core.or_client import client
 
-        combined = f"User: {user_text[:600]}\nRio: {vani_text[:300]}"
+        # Include recent chat history for context so corrections are understood
+        history = get_recent_chat_history(6)
+        history_str = "\n".join([f"{'User' if m['role']=='user' else 'Vani'}: {m['content']}" for m in history])
+        combined = f"Recent Context:\n{history_str}\n\nLatest Turn:\nUser: {user_text[:600]}\nVani: {vani_text[:300]}"
 
         raw = client.chat(
             f"Extract ALL memorable personal facts from this conversation. Any language.\n"
@@ -203,12 +206,13 @@ def extract_memory(user_text: str, vani_text: str, api_key: str = "") -> dict:
             f"  relationships → people mentioned: friends, family, partner, colleagues\n"
             f"                  (e.g. best_friend_ali: 'Best friend, met in university')\n"
             f"  wishes        → future plans, things to buy, travel plans, dreams\n"
-            f"  notes         → anything else worth remembering (habits, schedule, etc.)\n\n"
+            f"  notes         → anything else worth remembering (habits, schedule, website, phone number, etc.)\n\n"
             f"IMPORTANT:\n"
             f"- Be LIBERAL: if something MIGHT be worth remembering, include it.\n"
             f"- Extract from BOTH user and Vani turns.\n"
             f"- Skip: weather, reminders, search results, one-time commands.\n"
-            f"- Use concise English values regardless of conversation language.\n\n"
+            f"- Use concise English values regardless of conversation language.\n"
+            f"- ENSURE ABSOLUTE PRECISION: If the user spells out a word, website, or number (e.g. 's a t w i c k'), combine the letters accurately without spaces ('satwick'). Do NOT hallucinate data.\n\n"
             f"Format:\n"
             f'{{"identity":{{"name":{{"value":"Ali"}}}},\n'
             f' "preferences":{{"favorite_color":{{"value":"blue"}}}},\n'
@@ -219,7 +223,7 @@ def extract_memory(user_text: str, vani_text: str, api_key: str = "") -> dict:
             f"Conversation:\n{combined}\n\nJSON:",
             system="Return ONLY valid JSON. No markdown, no explanation, no extra text.",
             max_tokens=1024,
-            temperature=0.2,
+            temperature=0.0,
         )
 
         clean = raw.strip()

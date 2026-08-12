@@ -230,10 +230,10 @@
 
     // Color schemes mapped to states
     const STATES = {
-      STANDBY:   { main: 0xffaa30, mid: 0xdd7700, dim: 0x884400, glow: 0xffaa30, pulse: 1.0 },
-      LISTENING: { main: 0x00ccff, mid: 0x0088cc, dim: 0x004488, glow: 0x00ffff, pulse: 2.2 },
-      SPEAKING:  { main: 0xff7700, mid: 0xcc4400, dim: 0x772200, glow: 0xffaa00, pulse: 3.5 },
-      THINKING:  { main: 0xaaff00, mid: 0x55aa00, dim: 0x225500, glow: 0xaaff00, pulse: 5.0 },
+      STANDBY:   { main: 0xffffff, mid: 0xe6e6e6, dim: 0x999999, glow: 0xfffae6, pulse: 1.0 },
+      LISTENING: { main: 0xe6fbff, mid: 0xb3e6ff, dim: 0x66b3cc, glow: 0xccfcff, pulse: 2.2 },
+      SPEAKING:  { main: 0xffebcc, mid: 0xe6a373, dim: 0x995c33, glow: 0xffcc99, pulse: 3.5 },
+      THINKING:  { main: 0xf2ffcc, mid: 0xc2e673, dim: 0x669926, glow: 0xd9ff80, pulse: 5.0 },
       MUTED:     { main: 0x8c8c8c, mid: 0x555555, dim: 0x222222, glow: 0x8c8c8c, pulse: 0.3 }
     };
 
@@ -248,7 +248,7 @@
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 500);
-    camera.position.set(0, 0.5, 5.5);
+    camera.position.set(0, 0, 5.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
@@ -333,65 +333,217 @@
     }
 
     // Outer shell wireframes
-    const outerShell = new THREE.Group();
-    const R1 = 2.0;
-
-    // Rings
-    for (let i = -12; i <= 12; i++) {
-      const lat = (i / 12) * (Math.PI / 2) * 0.95;
-      const opacity = i % 3 === 0 ? 0.5 : 0.12;
-      const mat = opacity > 0.2 ? createMeridianMat(colors.mid, opacity) : createFaintMat(colors.dim, opacity);
-      outerShell.add(new THREE.Line(latRing(R1, lat), mat));
-    }
-
-    // Meridians
-    for (let i = 0; i < 20; i++) {
-      const lon = (i / 20) * Math.PI * 2;
-      const isMajor = i % 5 === 0;
-      const mat = isMajor ? createMeridianMat(colors.mid, 0.6) : createFaintMat(colors.dim, 0.1);
-      outerShell.add(new THREE.Line(meridian(R1, lon), mat));
-    }
-    orbGroup.add(outerShell);
-
-    // Inner core
-    const innerCore = new THREE.Group();
-    const R3 = 0.9;
-    for (let s = 0; s < 6; s++) {
+    // --- HUD GEOMETRY ---
+    const hudGroup = new THREE.Group();
+    orbGroup.add(hudGroup);
+    
+    // Latitude rings utility
+    function latRing(radius, lat, segs = 128) {
+      const r = radius * Math.cos(lat);
+      const y = radius * Math.sin(lat);
       const pts = [];
-      const turns = 4;
-      const segs = 200;
-      const phase = (s / 6) * Math.PI * 2;
       for (let i = 0; i <= segs; i++) {
-        const t = i / segs;
-        const lat = t * Math.PI - Math.PI / 2;
-        const lon = t * turns * Math.PI * 2 + phase;
+        const a = (i / segs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(r * Math.cos(a), y, r * Math.sin(a)));
+      }
+      return new THREE.BufferGeometry().setFromPoints(pts);
+    }
+
+    // Meridian utility
+    function meridian(radius, lon, segs = 128) {
+      const pts = [];
+      for (let i = 0; i <= segs; i++) {
+        const lat = (i / segs) * Math.PI - Math.PI / 2;
         pts.push(
           new THREE.Vector3(
-            R3 * Math.cos(lat) * Math.cos(lon),
-            R3 * Math.sin(lat),
-            R3 * Math.cos(lat) * Math.sin(lon)
+            radius * Math.cos(lat) * Math.cos(lon),
+            radius * Math.sin(lat),
+            radius * Math.cos(lat) * Math.sin(lon)
           )
         );
       }
-      innerCore.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), createLineMat(colors.main, 0.4)));
+      return new THREE.BufferGeometry().setFromPoints(pts);
     }
-    orbGroup.add(innerCore);
 
-    // Hot Center Icosahedron Core
-    const icoGeo = new THREE.IcosahedronGeometry(0.22, 1);
-    const icoEdges = new THREE.EdgesGeometry(icoGeo);
-    const icoWireMat = new THREE.LineBasicMaterial({ color: colors.glow, transparent: true, opacity: 0.9 });
-    const icoWire = new THREE.LineSegments(icoEdges, icoWireMat);
-    orbGroup.add(icoWire);
+    // Helper for 3D dashed rings (latitudes)
+    function dashedLatRing(radius, lat, segs = 60, dashLen = 0.05) {
+      const r = radius * Math.cos(lat);
+      const y = radius * Math.sin(lat);
+      const pts = [];
+      for (let i = 0; i < segs; i++) {
+        const a1 = (i / segs) * Math.PI * 2;
+        const a2 = a1 + dashLen;
+        pts.push(new THREE.Vector3(r * Math.cos(a1), y, r * Math.sin(a1)));
+        pts.push(new THREE.Vector3(r * Math.cos(a2), y, r * Math.sin(a2)));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return geo;
+    }
 
-    const coreSphereMat = new THREE.MeshBasicMaterial({
+    // 1. Glowing Core Sprite
+    const coreGlowCanvas = document.createElement("canvas");
+    coreGlowCanvas.width = 256;
+    coreGlowCanvas.height = 256;
+    const ctx = coreGlowCanvas.getContext("2d");
+    const coreGrad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    coreGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    coreGrad.addColorStop(0.2, 'rgba(255, 250, 200, 0.8)');
+    coreGrad.addColorStop(0.5, 'rgba(255, 200, 100, 0.2)');
+    coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = coreGrad;
+    ctx.fillRect(0, 0, 256, 256);
+    
+    const coreGlowTex = new THREE.CanvasTexture(coreGlowCanvas);
+    const coreGlowMat = new THREE.SpriteMaterial({
+      map: coreGlowTex, color: colors.glow, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const coreGlow = new THREE.Sprite(coreGlowMat);
+    coreGlow.scale.set(4, 4, 1);
+    hudGroup.add(coreGlow);
+
+    // 2. Dense 3D Orb Structure
+    const ringGroup = new THREE.Group();
+    hudGroup.add(ringGroup);
+    
+    const orbRadius = 2.5;
+
+    // Latitudes
+    const numLats = 16;
+    for (let i = 1; i < numLats; i++) {
+      const lat = (i / numLats) * Math.PI - Math.PI / 2;
+      const opacity = i % 2 === 0 ? 0.6 : 0.3;
+      const mat = createLineMat(colors.main, opacity);
+      ringGroup.add(new THREE.Line(latRing(orbRadius, lat), mat));
+      ringGroup.add(new THREE.Line(latRing(orbRadius * 1.2, lat), createFaintMat(colors.dim, opacity * 0.5)));
+    }
+
+    // Meridians
+    const numMers = 48; // Double the count since we're covering the full 360 degrees now to maintain density
+    for (let i = 0; i < numMers; i++) {
+      const lon = (i / numMers) * Math.PI * 2; 
+      const opacity = i % 4 === 0 ? 0.5 : 0.15;
+      const mat = createMeridianMat(colors.mid, opacity);
+      ringGroup.add(new THREE.Line(meridian(orbRadius, lon), mat));
+    }
+    
+    // Dashed 3D Rings
+    const dashedRing = new THREE.Group();
+    ringGroup.add(dashedRing);
+    dashedRing.add(new THREE.LineSegments(dashedLatRing(orbRadius * 0.8, 0, 60, 0.05), createLineMat(colors.main, 0.8)));
+    dashedRing.add(new THREE.LineSegments(dashedLatRing(orbRadius * 1.05, 0, 90, 0.02), createLineMat(colors.main, 0.6)));
+    dashedRing.add(new THREE.LineSegments(dashedLatRing(orbRadius * 1.5, Math.PI/6, 40, 0.08), createMeridianMat(colors.mid, 0.5)));
+    dashedRing.add(new THREE.LineSegments(dashedLatRing(orbRadius * 1.5, -Math.PI/6, 40, 0.08), createMeridianMat(colors.mid, 0.5)));
+
+    // 3. 3D Radial Spikes
+    const spikeGeo = new THREE.BufferGeometry();
+    const spikePts = [];
+    const numSpikes = 64;
+    for(let i=0; i<numSpikes; i++) {
+      const phi = Math.acos(1 - 2 * Math.random());
+      const theta = Math.random() * Math.PI * 2;
+      
+      let rInner = 0.5;
+      let rOuter = orbRadius + Math.random();
+      if (i % 8 === 0) { rInner = 0.2; rOuter = orbRadius * 2.0; } 
+      else if (i % 4 === 0) { rInner = 0.6; rOuter = orbRadius * 1.5; }
+      
+      const ux = Math.sin(phi) * Math.cos(theta);
+      const uy = Math.sin(phi) * Math.sin(theta);
+      const uz = Math.cos(phi);
+
+      spikePts.push(new THREE.Vector3(rInner*ux, rInner*uy, rInner*uz));
+      spikePts.push(new THREE.Vector3(rOuter*ux, rOuter*uy, rOuter*uz));
+    }
+    spikeGeo.setFromPoints(spikePts);
+    const spikes = new THREE.LineSegments(spikeGeo, createFaintMat(colors.main, 0.6));
+    hudGroup.add(spikes);
+
+    // 4. Massive 3D Particle Cloud
+    const dotsGeo = new THREE.BufferGeometry();
+    const dotsPts = [];
+    const numDots = 2500;
+    
+    const dotPos = new Float32Array(numDots * 3);
+    const dotDirs = new Float32Array(numDots * 3);
+    const dotSpeeds = new Float32Array(numDots);
+
+    for(let i=0; i<numDots; i++) {
+      const phi = Math.acos(1 - 2 * Math.random());
+      const theta = Math.random() * Math.PI * 2;
+      
+      const r = Math.pow(Math.random(), 3) * (orbRadius * 2.0); 
+      
+      const ux = Math.sin(phi) * Math.cos(theta);
+      const uy = Math.sin(phi) * Math.sin(theta);
+      const uz = Math.cos(phi);
+
+      dotPos[i*3] = r * ux;
+      dotPos[i*3+1] = r * uy;
+      dotPos[i*3+2] = r * uz;
+      
+      dotDirs[i*3] = ux;
+      dotDirs[i*3+1] = uy;
+      dotDirs[i*3+2] = uz;
+      
+      dotSpeeds[i] = (Math.random() * 0.01) + 0.002;
+    }
+    dotsGeo.setAttribute("position", new THREE.BufferAttribute(dotPos, 3));
+    
+    const dotsMat = new THREE.PointsMaterial({
+      color: colors.glow,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      map: new THREE.CanvasTexture((()=>{
+        const c=document.createElement('canvas');c.width=16;c.height=16;
+        const ctx=c.getContext('2d');
+        const g=ctx.createRadialGradient(8,8,0,8,8,8);
+        g.addColorStop(0,'rgba(255,255,255,1)');
+        g.addColorStop(0.3,'rgba(255,255,255,0.8)');
+        g.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=g;ctx.fillRect(0,0,16,16);return c;
+      })()),
+      depthWrite: false
+    });
+    const hudDots = new THREE.Points(dotsGeo, dotsMat);
+    hudGroup.add(hudDots);
+    
+    // 5. Central 3D Crosshair & Core Sphere
+    const crosshairGeo = new THREE.BufferGeometry();
+    const chR = 0.5;
+    crosshairGeo.setFromPoints([
+      new THREE.Vector3(-chR, 0, 0), new THREE.Vector3(chR, 0, 0),
+      new THREE.Vector3(0, -chR, 0), new THREE.Vector3(0, chR, 0),
+      new THREE.Vector3(0, 0, -chR), new THREE.Vector3(0, 0, chR)
+    ]);
+    const crosshair = new THREE.LineSegments(crosshairGeo, createLineMat(colors.main, 1.0));
+    hudGroup.add(crosshair);
+
+    // Make the core truly 3D with nested rotating geometric shapes
+    const coreGroup = new THREE.Group();
+    hudGroup.add(coreGroup);
+
+    // Inner solid core to give volume
+    const coreInnerMat = new THREE.MeshBasicMaterial({
       color: colors.glow,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.9,
       blending: THREE.AdditiveBlending
     });
-    const coreSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), coreSphereMat);
-    orbGroup.add(coreSphere);
+    const coreInner = new THREE.Mesh(new THREE.IcosahedronGeometry(0.2, 2), coreInnerMat);
+    coreGroup.add(coreInner);
+
+    // Outer wireframe core
+    const coreSphereMat = new THREE.MeshBasicMaterial({
+      color: colors.main,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      wireframe: true
+    });
+    const coreSphere = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 2), coreSphereMat);
+    coreGroup.add(coreSphere);
 
     // Floating text sprites
     const codeSnippets = [
@@ -408,7 +560,7 @@
       canvas.height = 16;
       const ctx = canvas.getContext("2d");
       ctx.font = "bold 10px Courier New";
-      ctx.fillStyle = "rgba(255, 170, 48, 0.75)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(text, 64, 8);
@@ -427,29 +579,23 @@
     for (let i = 0; i < 45; i++) {
       const txt = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
       const sp = makeTextSprite(txt);
-      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 1.0 + Math.random() * 2.0;
       const theta = Math.random() * Math.PI * 2;
-      const r = R1 + 0.05;
-      sp.position.set(
-        r * Math.sin(phi) * Math.cos(theta),
-        r * Math.cos(phi),
-        r * Math.sin(phi) * Math.sin(theta)
-      );
-      sp.userData = { phi, theta, r, speed: (0.0003 + Math.random() * 0.0005) };
+      sp.position.set(r * Math.cos(theta), r * Math.sin(theta), 0);
+      sp.userData = { theta, r, speed: (0.0003 + Math.random() * 0.0005) };
       textSprites.push(sp);
-      orbGroup.add(sp);
+      hudGroup.add(sp);
     }
 
-    // Ambient dust particles
+    // Ambient dust particles (now planar)
     const dustCount = 400;
     const dustPos = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount; i++) {
-      const rr = 0.5 + Math.random() * 4;
+      const rr = Math.random() * 4;
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      dustPos[i * 3] = rr * Math.sin(phi) * Math.cos(theta);
-      dustPos[i * 3 + 1] = rr * Math.cos(phi);
-      dustPos[i * 3 + 2] = rr * Math.sin(phi) * Math.sin(theta);
+      dustPos[i * 3] = rr * Math.cos(theta);
+      dustPos[i * 3 + 1] = rr * Math.sin(theta);
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 1.0;
     }
     const dustGeo = new THREE.BufferGeometry();
     dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(dustPos, 3));
@@ -461,20 +607,7 @@
       blending: THREE.AdditiveBlending
     });
     const dustPoints = new THREE.Points(dustGeo, dustMat);
-    orbGroup.add(dustPoints);
-
-    // Dynamic scanning ring
-    const ringGeo = new THREE.RingGeometry(R1 - 0.015, R1 + 0.015, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: colors.main,
-      transparent: true,
-      opacity: 0.35,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending
-    });
-    const scanRing = new THREE.Mesh(ringGeo, ringMat);
-    scanRing.rotation.x = Math.PI / 2;
-    orbGroup.add(scanRing);
+    hudGroup.add(dustPoints);
 
     // Rotate cam API
     function rotateBy(deltaTheta, deltaPhi) {
@@ -521,10 +654,11 @@
       document.getElementById("status-text").style.color = "#" + colors.main.toString(16);
       
       // Animate material color changes
-      icoWireMat.color.setHex(colors.glow);
-      coreSphereMat.color.setHex(colors.glow);
+      dotsMat.color.setHex(colors.glow);
+      if (typeof coreInnerMat !== 'undefined') coreInnerMat.color.setHex(colors.glow);
+      coreSphereMat.color.setHex(colors.main);
+      coreGlowMat.color.setHex(colors.glow);
       dustMat.color.setHex(colors.main);
-      ringMat.color.setHex(colors.main);
 
       lineMaterials.forEach(item => {
         if (item.type === "main") item.mat.color.setHex(colors.main);
@@ -547,40 +681,58 @@
       
       const spd = colors.pulse;
 
-      // Rotate shells
-      outerShell.rotation.y += 0.001 * spd;
-      outerShell.rotation.x = Math.sin(t * 0.05) * 0.04;
+      // Rotate HUD elements in 3D
+      ringGroup.rotation.y += 0.001 * spd;
+      ringGroup.rotation.x += 0.0005 * spd;
+      dashedRing.rotation.y -= 0.002 * spd;
+      spikes.rotation.y += 0.0005 * spd;
       
-      innerCore.rotation.y -= 0.003 * spd;
-      innerCore.rotation.z += 0.001 * spd;
+      // Expand and rotate particle cloud radially in 3D
+      const positions = hudDots.geometry.attributes.position.array;
+      for (let i = 0; i < numDots; i++) {
+        let r = Math.sqrt(
+          positions[i*3]*positions[i*3] + 
+          positions[i*3+1]*positions[i*3+1] + 
+          positions[i*3+2]*positions[i*3+2]
+        );
+        r += dotSpeeds[i] * spd;
+        
+        if (r > 6.0) r = Math.random() * 0.5; // respawn near center
+        
+        positions[i*3] = dotDirs[i*3] * r;
+        positions[i*3+1] = dotDirs[i*3+1] * r;
+        positions[i*3+2] = dotDirs[i*3+2] * r;
+      }
+      hudDots.geometry.attributes.position.needsUpdate = true;
 
-      icoWire.rotation.x += 0.005 * spd;
-      icoWire.rotation.y += 0.007 * spd;
+      // Small 3D wobble to make it feel alive
+      hudGroup.rotation.x = Math.sin(t * 0.2) * 0.05;
+      hudGroup.rotation.y = Math.cos(t * 0.15) * 0.05;
 
       // Pulsing Center Core based on mic level
       const micSurge = micLevel * 0.8;
       const pulseScale = 1.0 + 0.05 * Math.sin(t * 8 * spd) + micSurge;
-      coreSphere.scale.setScalar(pulseScale);
-      coreSphereMat.opacity = 0.15 + 0.1 * Math.sin(t * 5) + micLevel * 0.3;
+      if (typeof coreGroup !== 'undefined') {
+        coreGroup.scale.setScalar(pulseScale);
+        coreGroup.rotation.y += 0.02 * spd;
+        coreGroup.rotation.x += 0.015 * spd;
+        coreGroup.rotation.z += 0.01 * spd;
+      } else {
+        coreSphere.scale.setScalar(pulseScale);
+      }
+      
+      crosshair.scale.setScalar(pulseScale * 1.05);
 
-      icoWire.scale.setScalar(pulseScale * 1.1);
-
-      // Orbit code text
+      // Orbit code text (now strictly 2D planar)
       textSprites.forEach(sp => {
         const u = sp.userData;
         u.theta += u.speed * spd;
         sp.position.set(
-          u.r * Math.sin(u.phi) * Math.cos(u.theta),
-          u.r * Math.cos(u.phi),
-          u.r * Math.sin(u.phi) * Math.sin(u.theta)
+          u.r * Math.cos(u.theta),
+          u.r * Math.sin(u.theta),
+          0
         );
       });
-
-      // Sweep scanning ring
-      scanRing.position.y = Math.sin(t * 0.8 * spd) * R1;
-      const ringScale = Math.sqrt(Math.max(0, R1 * R1 - scanRing.position.y * scanRing.position.y)) / R1;
-      scanRing.scale.set(ringScale, ringScale, 1);
-      ringMat.opacity = 0.35 * ringScale;
 
       dustPoints.rotation.y += 0.0001;
 
@@ -598,7 +750,7 @@
 
     // Reset view button
     document.getElementById("reset-btn").addEventListener("click", () => {
-      camera.position.set(0, 0.5, 5.5);
+      camera.position.set(0, 0, 5.5);
       controls.target.set(0, 0, 0);
       controls.update();
     });
@@ -730,6 +882,9 @@
         const openGrabs = [];
         const seen = new Set();
 
+        let targetHandIndex = labels.indexOf("Right");
+        if (targetHandIndex === -1) targetHandIndex = 0;
+
         landmarks.forEach((lm, i) => {
           const label = labels[i];
           seen.add(label);
@@ -760,10 +915,10 @@
           }
 
           // System Control Integration
-          if (gestureController && i === 0) {
-            // Mouse Movement (Index Tip)
-            const mx = 1 - lm[8].x;
-            const my = lm[8].y;
+          if (gestureController && i === targetHandIndex) {
+            // Mouse Movement (Palm)
+            const mx = 1 - lm[9].x;
+            const my = lm[9].y;
             const now = performance.now();
             
             if (!state.lastMouse) state.lastMouse = {x: -1, y: -1, time: 0};

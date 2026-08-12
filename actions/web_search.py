@@ -117,18 +117,41 @@ def web_search(
         return _compare(items, aspect)
 
     try:
-        # 1. Actually perform the web search FIRST
-        results = _ddg_search(query)
-        search_context = _format_ddg(query, results)
-        
-        # 2. Use the LLM to synthesize a context-aware answer based on the search results
         from core.inference_wrapper import InferenceWrapper
         wrapper = InferenceWrapper()
+
+        search_query = query
+        # 1. Optimize search query if it's long or complex (like an abstract)
+        if len(query.split()) > 8:
+            optimize_prompt = (
+                f"The user provided this text to research:\n\n'{query}'\n\n"
+                "Formulate a concise, highly effective search engine query (3 to 7 words) "
+                "to find the most relevant information about this topic. "
+                "Return ONLY the search query string, no quotes, no explanations."
+            )
+            try:
+                optimized = wrapper.generate_text(
+                    prompt=optimize_prompt,
+                    system_instruction="You are an expert search engine query optimizer. Return only the raw query string.",
+                    provider="openai", # Fast and reliable for this
+                    temperature=0.1
+                ).strip(' "\'\n')
+                if optimized:
+                    search_query = optimized
+                    print(f"[WebSearch] 🧠 Optimized search query: {search_query!r}")
+            except Exception as e:
+                print(f"[WebSearch] ⚠️ Query optimization failed: {e}")
+
+        # 2. Actually perform the web search FIRST
+        results = _ddg_search(search_query)
+        search_context = _format_ddg(search_query, results)
         
+        # 3. Use the LLM to synthesize a context-aware answer based on the search results
         prompt = (
             f"The user asked: '{query}'.\n\n"
-            f"Here are the live web search results:\n{search_context}\n\n"
-            f"Based on the search results above, provide a comprehensive, context-aware answer."
+            f"Here are the live web search results for '{search_query}':\n{search_context}\n\n"
+            f"Based on the search results above, provide a comprehensive, context-aware answer. "
+            f"Synthesize the information well and demonstrate that you have learned from the context."
         )
         
         result = wrapper.generate_text(
@@ -140,6 +163,6 @@ def web_search(
         return result
     except Exception as e:
         print(f"[WebSearch] ⚠️ Synthesis failed ({e}) — returning raw DDG results...")
-        if 'results' in locals() and results:
+        if 'search_context' in locals() and search_context:
             return search_context
         return f"Search failed, sir: {e}"

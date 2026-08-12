@@ -41,7 +41,8 @@ from actions.llm_brains import (
 from actions.github_controller import github_control
 from actions.audio_transcriber import transcribe_audio
 from actions.hf_specialist import hf_specialist
-
+from actions.architect_3d import generate_3d_model
+from actions.deep_learner import learn_topic_deeply
 class WorkerManager:
     @staticmethod
     def dispatch(delegate_name, args, player, speak, async_callback=None):
@@ -90,12 +91,58 @@ class WorkerManager:
             return WorkerManager._run_in_background(transcribe_audio, {"parameters": args, "player": player}, async_callback, "AudioTranscriber")
         elif delegate_name == "hf_specialist":
             return WorkerManager._run_in_background(hf_specialist, {"parameters": args, "player": player}, async_callback, "HFSpecialist")
+        elif delegate_name == "delegate_to_3d_architect":
+            return WorkerManager._run_in_background(generate_3d_model, {"parameters": args, "player": player, "speak": speak}, async_callback, "3DArchitect")
+        elif delegate_name == "learn_topic_deeply":
+            return WorkerManager._run_in_background(learn_topic_deeply, {"parameters": args, "player": player, "speak": speak}, async_callback, "DeepLearner")
+        elif delegate_name == "enter_standby_mode":
+            if hasattr(player, "set_state"):
+                player.set_state("STANDBY")
+            if speak:
+                speak("Going into standby mode.")
+            return "Task delegated to VANI: Entering standby mode."
+        elif delegate_name == "enter_serious_mode":
+            return "SUCCESS: VANI is now in serious mode. You must drop all pleasantries, be extremely concise, direct, and robotic. Do not use 'sir'."
+        elif delegate_name == "enter_normal_mode":
+            return "SUCCESS: VANI is now in normal mode. You should resume your friendly, conversational persona and address the user as 'sir'."
+        elif delegate_name == "mcp_execute":
+            def run_mcp():
+                import json
+                from actions.mcp_gateway import mcp_gateway_instance
+                from core.inference_wrapper import inference_client
+                server = args.get("server", "")
+                action = args.get("action", "")
+                payload = args.get("payload", "")
+                authorized = args.get("authorized", False)
+                
+                result = mcp_gateway_instance.execute_action(server, action, payload, authorized)
+                
+                if result.get("status") == "authorization_required":
+                    return result["message"]
+                    
+                prompt = (
+                    f"You are V.A.N.I. You executed an MCP action: '{action}' on server '{server}'.\n"
+                    f"The server returned this raw JSON:\n{json.dumps(result)}\n\n"
+                    f"Translate this into a concise, natural voice response for the user."
+                )
+                try:
+                    spoken = inference_client.generate_text(prompt, system_instruction="You are VANI. Synthesize MCP responses cleanly.")
+                    return spoken.strip()
+                except Exception as e:
+                    return f"Action '{action}' on '{server}' executed. Output: {result}"
+            
+            return WorkerManager._run_in_background(run_mcp, {}, async_callback, "MCPGateway")
         elif delegate_name == "save_file":
             fc_args = {"action": "write", "path": args.get("path"), "content": args.get("content"), "overwrite": True}
             return WorkerManager._run_in_background(file_controller, {"parameters": fc_args, "player": player}, async_callback, "SaveFile")
         elif delegate_name == "find_file":
             fc_args = {"action": "find", "path": args.get("path", "home"), "name": args.get("name")}
             return WorkerManager._run_in_background(file_controller, {"parameters": fc_args, "player": player}, async_callback, "FindFile")
+        elif delegate_name == "post_to_instagram":
+            from actions.instagram_automation import post_to_instagram
+            def run_instagram():
+                return post_to_instagram(file_path=args.get("file_path"), caption=args.get("caption"))
+            return WorkerManager._run_in_background(run_instagram, {}, async_callback, "InstagramPoster")
         else:
             return f"Unknown delegate: {delegate_name}"
 
@@ -105,9 +152,15 @@ class WorkerManager:
             def _bg():
                 try:
                     res = target_func(**kwargs)
-                    async_callback(res)
                 except Exception as e:
-                    async_callback(f"Failed: {e}")
+                    res = f"Failed: {e}"
+                try:
+                    async_callback(res)
+                except RuntimeError:
+                    # Qt widget was deleted (Vani closed) before the background task finished — ignore silently
+                    pass
+                except Exception as e:
+                    print(f"[{thread_name}] Callback error: {e}")
             threading.Thread(target=_bg, name=thread_name, daemon=True).start()
             return f"Task delegated to {thread_name}. INSTRUCTION: Tell the user you are working on it, but DO NOT say the task is completed yet. Wait for the [BACKGROUND TASK UPDATE] message."
         else:
@@ -307,7 +360,7 @@ class WorkerManager:
                 return open_app(parameters={"app_name": browser, "url": url}, response=None, player=player)
             
             # Pattern: "open [browser] and navigate/go to/visit [url or site]"
-            m = re.search(r'(?i)(?:open|launch)\s+(.*?)\s+(?:and navigate to|and go to|and open|and visit|to|at)\s+(?:a link to\s+)?(?:my\s+)?([a-zA-Z0-9.-]+)', task)
+            m = re.search(r'(?i)(?:open|launch)\s+(.*?)\s+(?:and navigate to|and go to|and open|and visit|to|at)\s+(?:a link to\s+)?(?:my\s+)?([a-zA-Z0-9.\-:/]+)', task)
             if m:
                 app_name = m.group(1).strip()
                 target = m.group(2).strip()
@@ -358,8 +411,11 @@ class WorkerManager:
             return WorkerManager._run_in_background(flight_finder, {"parameters": {"origin": "", "destination": task, "date": "soon"}, "player": player}, async_callback, "Researcher-Flight")
         elif "youtube" in task or "video" in task:
             return youtube_video(parameters={"action": "play", "query": task}, response=None, player=player)
-        elif "joke" in task or "api" in task:
+        elif "joke" in task.lower() or "api" in task.lower() or "qr" in task.lower():
             return WorkerManager._run_in_background(free_api_query, {"parameters": {"query_description": task}, "player": player, "session_memory": None}, async_callback, "Researcher-API")
+        elif any(k in task for k in ["deep research", "research paper", "detailed paper", "in-depth", "learn deeply", "deep dive"]):
+            from actions.deep_learner import learn_topic_deeply
+            return WorkerManager._run_in_background(learn_topic_deeply, {"parameters": {"topic": task}, "player": player, "speak": speak}, async_callback, "DeepLearner")
         elif any(k in task for k in ["paper", "pdf", "uploaded", "document", "file"]) or re.search(r'\b[\w\-. ]+\.(pdf|docx|txt|md|csv|pptx)\b', task):
             # Route document analysis requests to Creator Companion (File Processor)
             return WorkerManager._run_creator(task, args, player, speak, async_callback)

@@ -143,15 +143,38 @@ Response JSON format:
             req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
 
         with urllib.request.urlopen(req, timeout=10) as response:
-            raw_data = response.read().decode("utf-8")
+            content_type = response.headers.get('Content-Type', '')
+            response_bytes = response.read()
             
-            # Format raw JSON or text
-            try:
-                data = json.loads(raw_data)
-                formatted_data = json.dumps(data, indent=2)
-            except Exception:
-                data = raw_data
-                formatted_data = raw_data
+            if content_type.startswith('image/'):
+                import tempfile
+                import os
+                ext = content_type.split('/')[-1].split(';')[0]
+                if ext == 'svg+xml': ext = 'svg'
+                elif ext == 'jpeg': ext = 'jpg'
+                
+                tmp_dir = os.path.join(tempfile.gettempdir(), 'vani_images')
+                os.makedirs(tmp_dir, exist_ok=True)
+                img_path = os.path.join(tmp_dir, f"api_result_{os.getpid()}.{ext}")
+                with open(img_path, "wb") as f:
+                    f.write(response_bytes)
+                
+                try:
+                    os.startfile(img_path)
+                except Exception:
+                    pass
+                
+                formatted_data = f"Success. An image was generated, saved to {img_path}, and opened on the screen for the user."
+            else:
+                raw_data = response_bytes.decode("utf-8")
+                
+                # Format raw JSON or text
+                try:
+                    data = json.loads(raw_data)
+                    formatted_data = json.dumps(data, indent=2)
+                except Exception:
+                    data = raw_data
+                    formatted_data = raw_data
     except Exception as e:
         msg = f"Sir, the API call to {api_to_call} failed: {e}"
         _speak_and_log(msg, player)

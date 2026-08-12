@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import platform
 
 def setup_api_keys():
     print("Welcome to Vani Setup!")
@@ -106,15 +107,56 @@ def setup_api_keys():
     if github_key:
         keys["github_api_key"] = github_key
 
+    # Prompt for Tripo AI API Key
+    print(f"\nCurrent Tripo AI API Key: {keys.get('tripo_api_key', 'Not set')}")
+    tripo_key = input("Enter your new Tripo AI API Key (leave blank to keep current): ").strip()
+    if tripo_key:
+        keys["tripo_api_key"] = tripo_key
+
+    # Prompt for Composio API Key
+    print(f"\nCurrent Composio API Key: {keys.get('composio_api_key', 'Not set')}")
+    composio_key = input("Enter your new Composio API Key (leave blank to keep current): ").strip()
+    if composio_key:
+        keys["composio_api_key"] = composio_key
+
     # Keep placeholders for others if they don't exist
     if "os_system" not in keys:
-        keys["os_system"] = "Windows" # Assuming default Windows
+        keys["os_system"] = platform.system()
 
     # Save to file
     with open(api_key_file, "w", encoding="utf-8") as f:
         json.dump(keys, f, indent=4)
         
+    # Sync with .env
+    env_file = base_dir / ".env"
+    existing_env = {}
+    if env_file.exists():
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.strip().split("=", 1)
+                    existing_env[k.strip()] = v.strip().strip('"').strip("'")
+                    
+    # Map json keys to env format
+    for k, v in keys.items():
+        if isinstance(v, str) and v:
+            # e.g., github_api_key -> GITHUB_API_KEY
+            # For standard tools, map specific names
+            env_key = k.upper()
+            if k == "github_api_key":
+                env_key = "GITHUB_TOKEN"
+            elif k == "cloudflare_api_key":
+                env_key = "CLOUDFLARE_API_TOKEN"
+            
+            existing_env[env_key] = v
+
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.write("# V.A.N.I. Environment Variables (Auto-Synced)\n\n")
+        for k, v in existing_env.items():
+            f.write(f'{k}="{v}"\n')
+
     print(f"\n✅ API keys successfully saved to {api_key_file.relative_to(base_dir)}")
+    print(f"✅ Environment variables automatically synced to {env_file.relative_to(base_dir)}")
     print("You can now start Vani!")
 
 if __name__ == "__main__":

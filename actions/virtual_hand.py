@@ -35,7 +35,7 @@ class VirtualHandWindow(QWidget):
         
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_from_queue)
-        self.timer.start(30)
+        self.timer.start(1000 // 144) # ~144 FPS
         
         self.command_queue = []
         

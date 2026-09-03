@@ -62,31 +62,61 @@ def _check_device_connected():
     if devices:
         return
 
+    # Check if user specified a manual phone IP / port in config
+    keys = _load_keys()
+    manual_ip = keys.get("phone_ip", "").strip()
+    manual_port = keys.get("phone_port", "").strip()
+    if manual_ip:
+        target = f"{manual_ip}:{manual_port}" if manual_port else manual_ip
+        print(f"[MobileControl] Attempting connection to configured phone at {target}...")
+        try:
+            _run_adb_command(["connect", target])
+            check_result = _run_adb_command(["devices"])
+            check_out = check_result.stdout.decode("utf-8")
+            check_lines = check_out.strip().split("\n")
+            if any("device" in l and "offline" not in l for l in check_lines[1:]):
+                print(f"[MobileControl] Successfully connected to {target}.")
+                return
+        except Exception as e:
+            print(f"[MobileControl] Manual IP connection failed: {e}")
+
     print("[MobileControl] No device connected, attempting mDNS auto-connect...")
-    try:
-        mdns_result = _run_adb_command(["mdns", "services"])
-        mdns_output = mdns_result.stdout.decode("utf-8")
-        for line in mdns_output.strip().split("\n"):
-            if "_adb-tls-connect._tcp" in line:
-                parts = line.split()
-                if len(parts) >= 3:
-                    ip_port = parts[2]
-                    print(f"[MobileControl] Found mDNS device at {ip_port}. Attempting connection...")
-                    _run_adb_command(["connect", ip_port])
-                    check_result = _run_adb_command(["devices"])
-                    check_out = check_result.stdout.decode("utf-8")
-                    check_lines = check_out.strip().split("\n")
-                    if any("device" in l and "offline" not in l for l in check_lines[1:]):
-                        print("[MobileControl] Successfully auto-connected to mDNS device.")
-                        return
-    except Exception as e:
-        print(f"[MobileControl] Auto-connect failed: {e}")
+    for attempt in range(3):
+        try:
+            mdns_result = _run_adb_command(["mdns", "services"])
+            mdns_output = mdns_result.stdout.decode("utf-8")
+            for line in mdns_output.strip().split("\n"):
+                if "_adb-tls-connect._tcp" in line or "_adb._tcp" in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        ip_port = parts[2]
+                        print(f"[MobileControl] Found mDNS device at {ip_port}. Attempting connection...")
+                        try:
+                            _run_adb_command(["connect", ip_port])
+                        except Exception:
+                            pass
+                        check_result = _run_adb_command(["devices"])
+                        check_out = check_result.stdout.decode("utf-8")
+                        check_lines = check_out.strip().split("\n")
+                        if any("device" in l and "offline" not in l for l in check_lines[1:]):
+                            print("[MobileControl] Successfully auto-connected to mDNS device.")
+                            return
+        except Exception as e:
+            print(f"[MobileControl] Auto-connect attempt {attempt+1} failed: {e}")
+        
+        if attempt < 2:
+            time.sleep(1.5)
 
     raise RuntimeError(
-        "No active Android device found. Since you want to use wireless ADB, "
-        "please ensure your phone is connected to the same Wi-Fi network and run: "
-        "`platform-tools\\adb.exe connect <YOUR_PHONE_IP>:5555` in your terminal. "
-        "If using Android 11+ Wireless Debugging, use the specific port shown in Developer Options."
+        "No active Android device connected.\n"
+        "To connect your phone wirelessly:\n"
+        "1. Open Settings -> Developer Options -> Wireless Debugging on your phone.\n"
+        "2. Note the 'IP address & Port' shown (e.g., 192.168.1.5:38427).\n"
+        "3. If never paired before, tap 'Pair device with pairing code' and run:\n"
+        "   platform-tools\\adb.exe pair <IP>:<PAIR_PORT> <6_DIGIT_CODE>\n"
+        "4. Then connect by running:\n"
+        "   platform-tools\\adb.exe connect <IP>:<PORT>\n"
+        "Tip: Or simply connect your phone via USB cable and allow USB Debugging."
     )
 
 def _take_screenshot() -> tuple[str, int, int]:

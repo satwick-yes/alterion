@@ -14,18 +14,17 @@ from pathlib import Path
 import psutil
 
 from PyQt6.QtCore import (
-    QEasingCurve, QMimeData, QObject, QPointF, QRectF, QSize, Qt,
+    QObject, QPointF, QRectF, Qt,
     QTimer, QUrl, pyqtSignal,
 )
 from PyQt6.QtGui import (
-    QBrush, QColor, QDragEnterEvent, QDropEvent, QFont, QFontDatabase,
-    QKeySequence, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap,
-    QRadialGradient, QShortcut,
+    QBrush, QColor, QDragEnterEvent, QDropEvent, QFont,
+    QKeySequence, QPainter, QPen, QShortcut,
 )
 from PyQt6.QtWidgets import (
     QApplication, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPushButton, QScrollArea, QSizePolicy, QTextEdit,
-    QVBoxLayout, QWidget, QProgressBar,
+    QVBoxLayout, QWidget,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel

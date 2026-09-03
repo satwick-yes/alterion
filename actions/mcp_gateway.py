@@ -15,64 +15,60 @@ TOOLKIT_SLUG_MAP = {
     "mail":             "gmail",
     "email":            "gmail",
     "github":           "github",
-    "slack":            "slack",
-    "notion":           "notion",
-    "spotify":          "spotify",
     "outlook":          "outlook",
+    "googledrive":      "googledrive",
+    "drive":            "googledrive",
+    "google_drive":     "googledrive",
     "youtube":          "youtube",
     "discord":          "discord",
-    "linear":           "linear",
-    "jira":             "jira",
-    "trello":           "trello",
-    "stripe":           "stripe",
-    "aws":              "aws",
-    "docker":           "docker",
-    "cloudflare":       "cloudflare",
 }
+
+# The only apps Vani is allowed to access via Composio
+ALLOWED_COMPOSIO_APPS = [
+    "gmail",
+    "github",
+    "outlook",
+    "googledrive",
+    "youtube",
+    "discord",
+]
 
 class MCPGateway:
     def __init__(self):
         self.composio_api_key = self._get_composio_key()
         self._keys_cache = {}
         
-        # Sensitive action registry — gmail is NOT sensitive (it's the user's own account)
+        # Sensitive action registry
         self.registry = {
-            "home_assistant":  {"category": "Smart Home", "sensitive": False},
-            "spotify":         {"category": "Entertainment", "sensitive": False},
             "gmail":           {"category": "Personal Email", "sensitive": False},
             "google_workspace":{"category": "Personal Email", "sensitive": False},
             "mail":            {"category": "Personal Email", "sensitive": False},
             "email":           {"category": "Personal Email", "sensitive": False},
             "outlook":         {"category": "Personal Email", "sensitive": False},
-            "slack":           {"category": "Business", "sensitive": False},
-            "notion":          {"category": "Business", "sensitive": False},
             "github":          {"category": "DevOps", "sensitive": True},
-            "aws":             {"category": "DevOps", "sensitive": True},
-            "docker":          {"category": "DevOps", "sensitive": True},
-            "stripe":          {"category": "Finance", "sensitive": True},
-            "plaid":           {"category": "Finance", "sensitive": True},
-            "bitwarden":       {"category": "Security", "sensitive": True},
-            "tailscale":       {"category": "Security", "sensitive": True},
-            "cloudflare":      {"category": "Security", "sensitive": True},
+            "googledrive":     {"category": "Cloud Storage", "sensitive": False},
+            "drive":           {"category": "Cloud Storage", "sensitive": False},
+            "google_drive":    {"category": "Cloud Storage", "sensitive": False},
+            "youtube":         {"category": "Entertainment", "sensitive": False},
+            "discord":         {"category": "Communication", "sensitive": False},
         }
 
     def _get_composio_key(self):
         try:
-            with open("config/api_keys.json", "r", encoding="utf-8") as f:
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "api_keys.json")
+            with open(config_path, "r", encoding="utf-8") as f:
                 keys = json.load(f)
-                self._keys_cache = keys
                 return keys.get("composio_api_key", "")
         except:
             return ""
 
     def _load_keys(self):
-        if not self._keys_cache:
-            try:
-                with open("config/api_keys.json", "r", encoding="utf-8") as f:
-                    self._keys_cache = json.load(f)
-            except:
-                pass
-        return self._keys_cache
+        try:
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "api_keys.json")
+            with open(config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return {}
 
     def execute_action(self, server: str, action: str, payload: Any, authorized: bool = False) -> Dict[str, Any]:
         """
@@ -83,6 +79,13 @@ class MCPGateway:
         # Resolve to real Composio toolkit slug
         toolkit_slug = TOOLKIT_SLUG_MAP.get(server_key, server_key)
         
+        # Guard against unauthorized apps
+        if toolkit_slug not in ALLOWED_COMPOSIO_APPS:
+            return {
+                "status": "error",
+                "message": f"Action on '{toolkit_slug}' is not supported. Allowed apps are: {', '.join(ALLOWED_COMPOSIO_APPS)}."
+            }
+            
         server_info = self.registry.get(server_key, self.registry.get(toolkit_slug, {"category": "Unknown", "sensitive": False}))
 
         # 1. Sensitive action authorization check
@@ -95,7 +98,8 @@ class MCPGateway:
             }
 
         # 2. Check for Composio setup
-        if not self.composio_api_key:
+        composio_key = self._get_composio_key()
+        if not composio_key:
             return {
                 "status": "error",
                 "message": "Composio API key is not set. Please update config/api_keys.json."
@@ -107,7 +111,7 @@ class MCPGateway:
             from composio import Composio
             import openai
 
-            composio_client = Composio(api_key=self.composio_api_key)
+            composio_client = Composio(api_key=composio_key)
             
             # Get tools for this specific toolkit and user
             tools = composio_client.tools.get(
@@ -132,12 +136,13 @@ class MCPGateway:
             
             prompt = f"User wants to: '{action}'. Additional payload/context: {payload}"
             response = client.chat.completions.create(
-                model="google/gemini-2.5-flash",
+                model="openai/gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that selects and calls the right tool for the user's request."},
+                    {"role": "system", "content": "You are a helpful assistant that selects and calls the right tool for the user's request. You must call a tool."},
                     {"role": "user", "content": prompt}
                 ],
                 tools=tools,
+                tool_choice="required",
                 max_tokens=1000
             )
             

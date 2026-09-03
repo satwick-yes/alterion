@@ -195,6 +195,19 @@ def _call_tool(tool: str, parameters: dict, speak: Callable | None, companion_na
     elif tool == "web_search":
         from actions.web_search import web_search
         return web_search(parameters=parameters, player=None) or "Done."
+
+    elif tool == "job_search_assistant":
+        from actions.job_search_assistant import job_search_assistant
+        return job_search_assistant(parameters=parameters, player=None, speak=None) or "Done."
+
+    elif tool == "gods_eye_view":
+        from actions.gods_eye_view import gods_eye_view
+        return gods_eye_view(parameters=parameters, player=None, speak=None) or "Done."
+
+    elif tool == "world_monitor":
+        from actions.world_monitor import world_monitor
+        return world_monitor(parameters=parameters, player=None, speak=None) or "Done."
+
     elif tool == "game_updater":
         from actions.game_updater import game_updater
         return game_updater(parameters=parameters, player=None, speak=speak) or "Done."
@@ -258,6 +271,10 @@ def _call_tool(tool: str, parameters: dict, speak: Callable | None, companion_na
     elif tool == "advanced_computer_use":
         from actions.vision_computer_use import advanced_computer_use
         return advanced_computer_use(parameters=parameters, player=None, speak=speak) or "Done."
+
+    elif tool == "vani_agent_loop":
+        from actions.vani_agent_loop import run_vani_agent_loop
+        return run_vani_agent_loop(parameters=parameters, player=None, speak=speak) or "Done."
 
     elif tool == "generated_code":
         description = parameters.get("description", "")

@@ -79,32 +79,7 @@ from memory.memory_manager import (
     should_extract_memory, extract_memory, append_chat_log, format_chat_history_for_prompt
 )
 
-from actions.file_processor import file_processor
-from actions.flight_finder     import flight_finder
-from actions.open_app          import open_app
-from actions.weather_report    import weather_action
-from actions.send_message      import send_message
-from actions.reminder          import reminder
-from actions.computer_settings import computer_settings
-from actions.screen_processor  import screen_process
-from actions.youtube_video     import youtube_video
-from actions.desktop           import desktop_control
-from actions.browser_control   import browser_control
-from actions.file_controller   import file_controller
-from actions.code_helper       import code_helper
-from actions.dev_agent         import dev_agent
-from actions.web_search        import web_search as web_search_action
-from actions.computer_control  import computer_control
-from actions.vision_computer_use import advanced_computer_use
-from actions.game_updater      import game_updater
 
-from actions.image_generator   import generate_image
-from actions.presentation_maker import create_presentation
-from actions.report_maker      import create_report
-from actions.system_shell      import run_system_shell
-from actions.free_apis_router  import free_api_query
-from actions.mobile_control    import mobile_control
-from actions.virtual_hand_control import virtual_hand_control
 
 def get_asset_dir():
     if getattr(sys, "frozen", False):
@@ -178,7 +153,7 @@ TOOL_DECLARATIONS = [
     },
     {
         "name": "delegate_to_operator",
-        "description": "Delegates a task to the Operator Agent. The Operator Agent is responsible for controlling the local PC, UI, system settings, desktop management, app launching, window focus, and ALL mobile phone interactions via ADB (including unlocking the phone with a PIN, swiping, tapping, typing, opening apps, taking screenshots, and sending mobile messages).",
+        "description": "Delegates a task to the Operator Agent. The Operator Agent is responsible for controlling the local PC, UI, system settings, desktop management, app launching, window focus, and ALL mobile phone interactions via ADB. DO NOT use this for checking emails (use mcp_execute for emails instead).",
         "parameters": {
             "type": "OBJECT",
             "properties": {
@@ -249,6 +224,17 @@ TOOL_DECLARATIONS = [
             "type": "OBJECT",
             "properties": {
                 "task": {"type": "STRING", "description": "The task for the NVIDIA sub-brain to perform."}
+            },
+            "required": ["task"]
+        }
+    },
+    {
+        "name": "delegate_to_hermes",
+        "description": "Delegates a task to the Hermes Agent. The Hermes Agent has absolute 'god mode' control over the entire computer. Use this when the user asks to do literally ANYTHING on the computer that you cannot do yourself natively, such as changing deeply nested system settings, executing complex arbitrary powershell scripts, writing automation, file modifications, or unrestricted system control.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "task": {"type": "STRING", "description": "The exact and highly detailed request for Hermes to execute on the local computer."}
             },
             "required": ["task"]
         }
@@ -368,6 +354,36 @@ TOOL_DECLARATIONS = [
         }
     },
     {
+        "name": "job_search_assistant",
+        "description": "Helps the user create a custom resume or search for jobs using the AI Job Search tool. Use this when the user says 'Vani make a custom resume for me' or 'search for jobs'.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "mode": {"type": "STRING", "description": "The mode to run: 'manual' (opens the directory for the user) or 'automated' (Vani takes full control to generate resume and search jobs)."},
+                "details": {"type": "STRING", "description": "Any details provided by the user (if automated)."}
+            },
+            "required": ["mode"]
+        }
+    },
+    {
+        "name": "gods_eye_view",
+        "description": "Starts the God's Eye View console (real-time 3D globe and tracking tool). Use this when the user says 'Vani use god view' or something similar.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "world_monitor",
+        "description": "Starts the World Monitor dashboard (real-time global intelligence and situational awareness tool). Use this when the user says 'Vani open World Monitor' or something similar.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
         "name": "save_file",
         "description": "Explicitly saves content or code to a file at any location. You must provide the full path or shortcut like 'Downloads/my_file.txt' or 'Documents/code.py'.",
         "parameters": {
@@ -451,11 +467,11 @@ TOOL_DECLARATIONS = [
     },
     {
         "name": "mcp_execute",
-        "description": "Executes an action on a connected Model Context Protocol (MCP) server (e.g. home_assistant, github, stripe, playwright, google_workspace, slack, notion). Use this to interface with external apps for emails/gmail, smart home, devops, finance, or web APIs.",
+        "description": "Executes an action on a connected Model Context Protocol (MCP) server. Allowed servers are ONLY: gmail, github, outlook, googledrive, youtube, discord. Use this to interface with external apps for emails, repos, drive storage, videos, or chats.",
         "parameters": {
             "type": "OBJECT",
             "properties": {
-                "server": {"type": "STRING", "description": "The target MCP server name (e.g. 'home_assistant', 'stripe', 'github', 'google_workspace')."},
+                "server": {"type": "STRING", "description": "The target MCP server name (ONLY use one of: 'gmail', 'github', 'outlook', 'googledrive', 'youtube', 'discord')."},
                 "action": {"type": "STRING", "description": "The natural language action or endpoint to execute (e.g. 'turn off lights', 'issue refund', 'read emails')."},
                 "payload": {"type": "STRING", "description": "JSON string containing any required payload parameters."},
                 "authorized": {"type": "BOOLEAN", "description": "Set to False normally. If the tool previously returned an AUTHORIZATION REQUIRED response and the user subsequently explicitly approved it, set this to True."}
@@ -490,11 +506,10 @@ class VaniLive:
         self._speaking_lock = threading.Lock()
         
         # New Lock and Timeout state
-        import time
         self.is_busy = False
         self.bg_task_running = False
-        self.last_input_time = time.time()
         self.last_user_query = ""
+        self.serious_mode = False
         
         self.ui.on_text_command = self._on_text_command
 
@@ -532,6 +547,7 @@ class VaniLive:
             return
         elif re.match(r"^.*serious mode[.!?]*$", txt):
             self.ui.write_log("SYS: Switching to Serious Mode.")
+            self.serious_mode = True
             if self.session and self._loop:
                 asyncio.run_coroutine_threadsafe(
                     self.session.send_client_content(
@@ -543,6 +559,7 @@ class VaniLive:
             return
         elif re.match(r"^.*normal mode[.!?]*$", txt):
             self.ui.write_log("SYS: Switching to Normal Mode.")
+            self.serious_mode = False
             if self.session and self._loop:
                 asyncio.run_coroutine_threadsafe(
                     self.session.send_client_content(
@@ -578,6 +595,20 @@ class VaniLive:
         full_text = text
         if context_str:
             full_text = f"{context_str}User command: {text}"
+
+        if getattr(self, "serious_mode", False):
+            self.ui.set_state("THINKING")
+            def _run_serious_executor():
+                try:
+                    from agent.executor import AgentExecutor
+                    executor = AgentExecutor()
+                    res = executor.execute(text, speak=self.speak)
+                    _update_memory_async(text, res)
+                except Exception as e:
+                    self.speak(f"Sir, the serious mode specialized agent failed: {e}")
+                    traceback.print_exc()
+            threading.Thread(target=_run_serious_executor, daemon=True).start()
+            return
 
         if not self.session:
             # Fallback text execution mode using the autonomous AgentExecutor
@@ -754,12 +785,14 @@ class VaniLive:
                 )
 
             if name == "enter_serious_mode":
+                self.serious_mode = True
                 return types.FunctionResponse(
                     id=fc.id, name=name,
                     response={"result": "SUCCESS: VANI is now in serious mode. Drop all pleasantries. Be extremely concise, direct, and robotic. Do not use 'sir'."}
                 )
 
             if name == "enter_normal_mode":
+                self.serious_mode = False
                 return types.FunctionResponse(
                     id=fc.id, name=name,
                     response={"result": "SUCCESS: VANI is now in normal mode. Resume your friendly, conversational persona and address the user as 'sir'."}
@@ -973,9 +1006,7 @@ class VaniLive:
                             txt = sc.input_transcription.text.strip()
                             if txt:
                                 in_buf.append(txt)
-                                import time
-                                self.last_input_time = time.time()
-
+                                
                         if sc.turn_complete:
                             # Keep speaking state True while there is still audio in queue playing
                             if self.audio_in_queue and self.audio_in_queue.empty():
@@ -1124,17 +1155,36 @@ class VaniLive:
                     except:
                         pass
 
-                    t1 = tg.create_task(self._send_realtime())
-                    t2 = tg.create_task(self._listen_audio())
-                    t3 = tg.create_task(self._receive_audio())
-                    t4 = tg.create_task(self._play_audio())
-                    t5 = tg.create_task(self._stream_screen())
+                    tasks = [
+                        tg.create_task(self._send_realtime()),
+                        tg.create_task(self._listen_audio()),
+                        tg.create_task(self._receive_audio()),
+                        tg.create_task(self._play_audio()),
+                        tg.create_task(self._stream_screen())
+                    ]
                     
+                    # ── Background task suspension logic ──────────────────────
+                    # Only suspend the live session if a background task is STILL
+                    # running after a grace period. Fast LLM/brain calls finish in
+                    # < 5s and should NOT drop the connection. Only long-running
+                    # tasks (GUI loops, mobile control, file ops) trigger suspension.
+                    _SUSPENSION_GRACE_S = 8   # seconds to wait before suspending
                     while True:
                         await asyncio.sleep(1)
                         if getattr(self, "bg_task_running", False):
-                            print("[VANI] ⏸️ Suspending live voice mode while working...")
-                            break
+                            # Task just started — wait for the grace period
+                            _waited = 0
+                            while _waited < _SUSPENSION_GRACE_S:
+                                await asyncio.sleep(1)
+                                _waited += 1
+                                if not getattr(self, "bg_task_running", False):
+                                    break  # Task finished in time — keep session alive
+                            else:
+                                # Still running after grace period — suspend
+                                print("[VANI] ⏸️ Suspending live voice mode while working...")
+                                for t in tasks:
+                                    t.cancel()
+                                break
                     
             except asyncio.CancelledError:
                 pass

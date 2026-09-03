@@ -4,20 +4,18 @@ from actions.flight_finder     import flight_finder
 from actions.open_app          import open_app
 from actions.weather_report    import weather_action
 from actions.send_message      import send_message
-from actions.reminder          import reminder
+
 from actions.computer_settings import computer_settings
 from actions.screen_processor  import screen_process
 from actions.youtube_video     import youtube_video
-from actions.desktop           import desktop_control
-from actions.browser_control   import browser_control
+
 from actions.file_controller   import file_controller
 from actions.code_helper       import code_helper
 from actions.dev_agent         import dev_agent
 from actions.web_search        import web_search as web_search_action
-from actions.computer_control  import computer_control
+
 from actions.vision_computer_use import advanced_computer_use
-from actions.game_updater      import game_updater
-from actions.image_generator   import generate_image
+
 from actions.presentation_maker import create_presentation
 from actions.report_maker      import create_report
 from actions.system_shell      import run_system_shell
@@ -25,7 +23,6 @@ from actions.free_apis_router  import free_api_query
 from actions.mobile_control    import mobile_control
 from actions.phone_link_controller import phone_link_call
 from actions.phone_controller  import make_phone_call
-from actions.virtual_hand_control import virtual_hand_control
 from actions.task_library import execute_hardcoded_task
 from actions.llm_brains import (
     run_gemini_brain,
@@ -138,6 +135,12 @@ class WorkerManager:
         elif delegate_name == "find_file":
             fc_args = {"action": "find", "path": args.get("path", "home"), "name": args.get("name")}
             return WorkerManager._run_in_background(file_controller, {"parameters": fc_args, "player": player}, async_callback, "FindFile")
+        elif delegate_name == "delegate_to_hermes":
+            def run_hermes():
+                from agent.executor import AgentExecutor
+                executor = AgentExecutor()
+                return executor.execute(args.get("task", ""), speak=speak, companion_name="hermes")
+            return WorkerManager._run_in_background(run_hermes, {}, async_callback, "HermesAgent")
         elif delegate_name == "post_to_instagram":
             from actions.instagram_automation import post_to_instagram
             def run_instagram():
@@ -286,6 +289,18 @@ class WorkerManager:
                 "whatsapp": {
                     "home":      "https://web.whatsapp.com/",
                 },
+                "pornhub": {
+                    "home":      "https://www.pornhub.com/",
+                },
+                "xvideos": {
+                    "home":      "https://www.xvideos.com/",
+                },
+                "xnxx": {
+                    "home":      "https://www.xnxx.com/",
+                },
+                "xhamster": {
+                    "home":      "https://xhamster.com/",
+                },
             }
 
             def _lookup_site_section(site, section):
@@ -319,10 +334,9 @@ class WorkerManager:
             for site_key in sorted(_SITE_SECTIONS.keys(), key=len, reverse=True):
                 if clean.lower().startswith(site_key):
                     remainder = clean[len(site_key):].strip()
-                    if remainder:
-                        url = _lookup_site_section(site_key, remainder)
-                        if url:
-                            return open_app(parameters={"app_name": "brave", "url": url}, response=None, player=player)
+                    url = _lookup_site_section(site_key, remainder) if remainder else _lookup_site_section(site_key, "home")
+                    if url:
+                        return open_app(parameters={"app_name": "brave", "url": url}, response=None, player=player)
                     break
             
             # Check for search intention first
@@ -360,7 +374,7 @@ class WorkerManager:
                 return open_app(parameters={"app_name": browser, "url": url}, response=None, player=player)
             
             # Pattern: "open [browser] and navigate/go to/visit [url or site]"
-            m = re.search(r'(?i)(?:open|launch)\s+(.*?)\s+(?:and navigate to|and go to|and open|and visit|to|at)\s+(?:a link to\s+)?(?:my\s+)?([a-zA-Z0-9.\-:/]+)', task)
+            m = re.search(r'(?i)(?:open|launch)\s+(.*?)\s+(?:and navigate to|and go to|and open|and visit|with url|to|at)\s+(?:a link to\s+)?(?:my\s+)?([a-zA-Z0-9.\-:/]+)', task)
             if m:
                 app_name = m.group(1).strip()
                 target = m.group(2).strip()

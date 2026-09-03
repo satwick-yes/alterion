@@ -23,7 +23,7 @@ class IntegrationGateway:
             "Operator Agent": [
                 "open_app", "close_app", "computer_settings", 
                 "computer_control", "desktop_control", "system_shell", 
-                "advanced_computer_use", "mobile_control", 
+                "advanced_computer_use", "vani_agent_loop", "mobile_control", 
                 "cmd_control", "game_updater", "browser_control", "screen_process", "agent_task", "send_message", "virtual_hand_control",
                 "delegate_to_operator", "enter_serious_mode", "enter_normal_mode", "enter_standby_mode", "mcp_execute", "memorize_fact"
             ],

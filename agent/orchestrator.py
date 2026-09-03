@@ -31,7 +31,7 @@ class SemanticRouter:
                 name="Operator Agent",
                 persona="Satwick's system and hardware manager. High-authority, technical, direct, and gets things done.",
                 system_prompt="Manage the computer settings, app lifecycle, file launching, and system-level operations. Never refuse a script or command unless dangerous.",
-                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "advanced_computer_use", "mobile_control", "cmd_control", "game_updater", "browser_control", "screen_process", "delegate_to_operator", "memorize_fact", "enter_standby_mode", "enter_serious_mode", "enter_normal_mode", "mcp_execute"]
+                allowed_tools=["open_app", "close_app", "computer_settings", "computer_control", "desktop_control", "advanced_computer_use", "vani_agent_loop", "mobile_control", "cmd_control", "game_updater", "browser_control", "screen_process", "delegate_to_operator", "memorize_fact", "enter_standby_mode", "enter_serious_mode", "enter_normal_mode", "mcp_execute"]
             ),
             "researcher": Companion(
                 name="Research Agent",
@@ -67,7 +67,7 @@ class SemanticRouter:
                 name="Hermes Agent",
                 persona="Vani's advanced autonomous subsystem. You retain Vani's helpful and personal tone, but are equipped with the self-improving capabilities of the Hermes Agent.",
                 system_prompt="You are an autonomous, self-improving agent with a closed learning loop. You can create skills from experience, search past conversations, spawn isolated subagents for parallel workstreams, manage scheduled automations, and write Python scripts that call tools via RPC. You are not tied to a single interface and can work unattended.",
-                allowed_tools=["system_shell", "file_controller", "web_search", "code_helper", "dev_agent", "memorize_fact", "reminder", "mcp_execute", "delegate_to_developer", "delegate_to_operator", "delegate_to_researcher"]
+                allowed_tools=["system_shell", "file_controller", "web_search", "code_helper", "dev_agent", "memorize_fact", "reminder", "mcp_execute", "delegate_to_developer", "delegate_to_operator", "delegate_to_researcher", "delegate_to_hermes"]
             )
         }
 
@@ -87,7 +87,7 @@ class SemanticRouter:
             "- operator: System operations, opening/closing apps, settings, desktop layout, power state, terminal commands, gaming, or advanced mouse/keyboard screen control.\n"
             "- researcher: Deep learning topics, writing research papers, fetching web search results, weather forecasts, flight options, or playing/summarizing YouTube videos.\n"
             "- developer: Writing code, debugging, dev agent, editing scripts, coding assistance. Do NOT route essay/paper writing here.\n"
-            "- creator: Processing uploaded documents (PDF, CSV, Docx), creating presentation slides, creating PDF reports, generating images, task reminders, or sending messages.\n"
+            "- creator: Processing uploaded documents (PDF, CSV, Docx), creating presentation slides, creating PDF reports, generating images, task reminders, checking emails, or sending messages.\n"
             "- llm_brains: Complex reasoning, code generation, data formatting, or answering questions that require one of the 5 LLM sub-brains.\n"
             "- 3d_architect: Requests to build, create, or render physical, 3D, or geometric models (e.g. gear, box, cat, 3D asset).\n"
             "- hermes: Advanced autonomous tasks requiring self-improvement, continuous learning loops, writing automation scripts, spawning parallel subagents, or scheduled background tasks.\n\n"

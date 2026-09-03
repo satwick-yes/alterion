@@ -133,8 +133,8 @@ def _generate_organic(task: str, player) -> str:
         "Authorization": f"Bearer {api_key}"
     }
     payload = {
-        "prompt": task,
-        "model": "v3.1-20260211"
+        "type": "text_to_model",
+        "prompt": task
     }
 
     try:
@@ -142,7 +142,7 @@ def _generate_organic(task: str, player) -> str:
             player.write_log("3D_ARCHITECT: Initiating task with Tripo AI...")
         
         response = requests.post(
-            "https://openapi.tripo3d.ai/v3/generation/text-to-model",
+            "https://api.tripo3d.ai/v2/openapi/task",
             headers=headers,
             json=payload,
             timeout=15
@@ -152,7 +152,7 @@ def _generate_organic(task: str, player) -> str:
         
         # Tripo API returns {"code": 0, "data": {"task_id": "..."}}
         if data.get("code") != 0 or "data" not in data or "task_id" not in data["data"]:
-            return f"Tripo AI API Error: Unexpected response format: {data}"
+            return f"Tripo AI API Error: {data.get('message', 'Unexpected response format')} - {data}"
             
         task_id = data["data"]["task_id"]
         
@@ -166,7 +166,7 @@ def _generate_organic(task: str, player) -> str:
             time.sleep(poll_interval)
             
             task_resp = requests.get(
-                f"https://openapi.tripo3d.ai/v3/tasks/{task_id}",
+                f"https://api.tripo3d.ai/v2/openapi/task/{task_id}",
                 headers=headers,
                 timeout=10
             )
@@ -174,13 +174,14 @@ def _generate_organic(task: str, player) -> str:
             task_data = task_resp.json()
             
             if task_data.get("code") == 0 and "data" in task_data:
-                status = task_data["data"].get("status")
+                status = task_data["data"].get("status", "")
                 
                 if player:
                     player.write_log(f"3D_ARCHITECT: Polling task status: {status} ({i+1}/{max_polls})")
                 
-                if status == "SUCCESS":
-                    model_url = task_data["data"]["output"].get("model")
+                if status.lower() == "success":
+                    # For v2, output contains 'model'
+                    model_url = task_data["data"].get("output", {}).get("model")
                     if model_url:
                         if player:
                             player.write_log("3D_ARCHITECT: Model generated! Downloading...")
@@ -197,7 +198,7 @@ def _generate_organic(task: str, player) -> str:
                         return f"Successfully generated the organic 3D model. The file '{out_file}' has been saved in the current directory."
                     else:
                         return f"Task succeeded but no model URL found in output: {task_data}"
-                elif status in ["FAILED", "CANCELLED", "TIMEOUT"]:
+                elif status.lower() in ["failed", "cancelled", "timeout", "banned"]:
                     return f"Task failed with status: {status}. Details: {task_data}"
             else:
                 if player:

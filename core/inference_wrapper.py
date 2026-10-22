@@ -57,24 +57,28 @@ class InferenceWrapper:
             is_gemini_valid = bool(self.gemini_key)
             is_groq_valid = bool(self.groq_key)
             
-            if is_groq_valid:
+            from core.local_engine import local_engine
+            if local_engine.is_available():
+                self.default_provider = "local"
+            elif is_groq_valid:
                 self.default_provider = "groq"
             elif is_gemini_valid:
                 self.default_provider = "gemini"
             else:
-                self.default_provider = "gemini" # fallback
+                self.default_provider = "local" # Default to offline local
         except Exception as e:
             logger.error(f"Failed to load API keys: {e}")
 
     def get_active_providers(self) -> List[str]:
         providers = []
+        from core.local_engine import local_engine
+        if local_engine.is_available(): providers.append("local")
         if self.gemini_key: providers.append("gemini")
         if self.groq_key: providers.append("groq")
         if self.openai_key: providers.append("openai")
         if self.openrouter_key: providers.append("openrouter")
         if self.deepseek_key: providers.append("deepseek")
-        # Skipping Nvidia here as it's specialized for vision/large reasoning, but it's an option.
-        return providers if providers else ["gemini"]
+        return providers if providers else ["local"]
 
     def generate_text(
         self,
@@ -118,10 +122,17 @@ class InferenceWrapper:
             elif provider == "cloudflare":
                 return self._call_cloudflare_text(prompt, system_instruction, model, temperature, max_tokens)
             else:
+                from core.local_engine import local_engine
+                if local_engine.is_available():
+                    return local_engine.generate_text(prompt, system_instruction, model, temperature, max_tokens)
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
-            # Automatic fallback to OpenRouter/Groq if primary provider fails
-            if provider != "openrouter" and self.openrouter_key:
+            # Automatic fallback to local or OpenRouter/Groq
+            from core.local_engine import local_engine
+            if provider != "local" and local_engine.is_available():
+                logger.warning(f"Provider '{provider}' failed: {e}. Falling back to local engine.")
+                return local_engine.generate_text(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider != "openrouter" and self.openrouter_key:
                 logger.warning(f"Provider '{provider}' text generation failed: {e}. Falling back to openrouter.")
                 return self._call_openrouter_text(prompt, system_instruction, None, temperature, max_tokens)
             elif provider != "groq" and self.groq_key:
@@ -142,7 +153,10 @@ class InferenceWrapper:
         provider = provider or override or self.default_provider
         
         try:
-            if provider == "gemini":
+            if provider == "local":
+                from core.local_engine import local_engine
+                return local_engine.generate_json(prompt, system_instruction, model, temperature, max_tokens)
+            elif provider == "gemini":
                 return self._call_gemini_json(prompt, system_instruction, model, temperature, max_tokens)
             elif provider == "openrouter":
                 return self._call_openrouter_json(prompt, system_instruction, model, max_tokens)
@@ -157,9 +171,21 @@ class InferenceWrapper:
             elif provider == "mistral":
                 return self._call_mistral_json(prompt, system_instruction, model, temperature, max_tokens)
             else:
+                from core.local_engine import local_engine
+                if local_engine.is_available():
+                    return local_engine.generate_json(prompt, system_instruction, model, temperature, max_tokens)
                 raise ValueError(f"Unknown provider: {provider}")
         except Exception as e:
-            # Automatic fallback to OpenRouter JSON if primary fails
+            from core.local_engine import local_engine
+            if provider != "local" and local_engine.is_available():
+                logger.warning(f"Provider '{provider}' JSON failed: {e}. Falling back to local engine.")
+                return local_engine.generate_json(prompt, system_instruction, model, temperature, max_tokens)
+            if provider != "groq" and self.groq_key:
+                try:
+                    logger.warning(f"Provider '{provider}' JSON generation failed: {e}. Falling back to groq.")
+                    return self._call_groq_json(prompt, system_instruction, None, temperature, max_tokens)
+                except Exception as groq_err:
+                    logger.warning(f"Groq fallback JSON failed: {groq_err}")
             if provider != "openrouter" and self.openrouter_key:
                 logger.warning(f"Provider '{provider}' JSON generation failed: {e}. Falling back to openrouter.")
                 return self._call_openrouter_json(prompt, system_instruction, None, max_tokens)
@@ -440,8 +466,8 @@ class InferenceWrapper:
 
     # --- GROQ IMPLEMENTATIONS ---
     def _call_groq_text(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> str:
-        if not model or "gemini" in model.lower():
-            model = "llama-3.3-70b-versatile"
+        if not model or "gemini" in model.lower() or "llama" in model.lower():
+            model = "qwen/qwen3.8-27b"
         try:
             import openai
             client = openai.OpenAI(api_key=self.groq_key, base_url="https://api.groq.com/openai/v1")
@@ -462,8 +488,8 @@ class InferenceWrapper:
             raise RuntimeError(f"Groq generation failed: {e}")
 
     def _call_groq_json(self, prompt: str, system: Optional[str], model: Optional[str], temp: float, max_tok: int) -> Dict:
-        if not model or "gemini" in model.lower():
-            model = "llama-3.3-70b-versatile"
+        if not model or "gemini" in model.lower() or "llama" in model.lower():
+            model = "qwen/qwen3.8-27b"
         try:
             import openai
             client = openai.OpenAI(api_key=self.groq_key, base_url="https://api.groq.com/openai/v1")
@@ -638,8 +664,8 @@ class InferenceWrapper:
         candidates = []
         models = [
             ("gemini", None),
-            ("openrouter", "nvidia/nemotron-3-super-120b-a12b:free"),
             ("openrouter", "meta-llama/llama-3.3-70b-instruct:free"),
+            ("openrouter", "qwen/qwen-2.5-coder-32b-instruct:free"),
             ("sambanova", "Meta-Llama-3.3-70B-Instruct") if self.sambanova_key else None,
             ("mistral", "mistral-large-latest") if self.mistral_key else None,
         ]

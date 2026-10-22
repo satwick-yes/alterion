@@ -34,7 +34,7 @@ def learn_topic_deeply(parameters: dict, player=None, speak=None) -> str:
         response = inference_client.generate_json(
             prompt=prompt,
             system_instruction="You are an expert curriculum designer. Return only a JSON array of strings.",
-            provider="gemini"
+            provider="groq"
         )
         subtopics = response if isinstance(response, list) else response.get("subtopics", [])
         if not subtopics:
@@ -96,7 +96,7 @@ def learn_topic_deeply(parameters: dict, player=None, speak=None) -> str:
             facts_list = inference_client.generate_json(
                 prompt=extract_prompt,
                 system_instruction="You are a knowledge extraction engine. Return only a JSON array of strings containing standalone facts.",
-                provider="gemini"
+                provider="groq"
             )
             if isinstance(facts_list, dict) and "facts" in facts_list:
                 facts_list = facts_list["facts"]

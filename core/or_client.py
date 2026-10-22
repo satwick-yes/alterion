@@ -35,14 +35,14 @@ def _load_api_key() -> str:
 
 TEXT_MODELS: list[str] = [
     "openrouter/free",
-    "nvidia/nemotron-3-super-120b-a12b:free",
     "google/gemma-4-31b-it:free",
-    "nvidia/nemotron-3-nano-30b-a3b:free"
+    "minimax/minimax-m3.1-flash:free",
+    "liquid/lfm-2.5-2.6b:free"
 ]
 
 VISION_MODELS: list[str] = [
-    "nvidia/nemotron-nano-12b-v2-vl:free",
-    "google/gemma-4-31b-it:free"
+    "google/gemma-4-31b-it:free",
+    "nvidia/nemotron-3.5-super-vl:free"
 ]
 
 API_URL               = "https://openrouter.ai/api/v1/chat/completions"

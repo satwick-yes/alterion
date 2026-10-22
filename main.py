@@ -196,6 +196,17 @@ TOOL_DECLARATIONS = [
         }
     },
     {
+        "name": "delegate_to_local_brain",
+        "description": "Delegates a reasoning, analysis, or general task to Vani's on-device 100% offline Local Brain (powered by local GPU/Ollama).",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "task": {"type": "STRING", "description": "The task for the local sub-brain to perform."}
+            },
+            "required": ["task"]
+        }
+    },
+    {
         "name": "delegate_to_gemini_brain",
         "description": "Delegates a complex reasoning or general task to the Gemini Sub-Brain (Powered by Google Gemini).",
         "parameters": {
@@ -463,6 +474,17 @@ TOOL_DECLARATIONS = [
                 "topic": {"type": "STRING", "description": "The major concept or topic to learn deeply."}
             },
             "required": ["topic"]
+        }
+    },
+    {
+        "name": "query_memory",
+        "description": "Searches Vani's long-term memory database and learned knowledge vectors for topics, facts, or past research that the user previously asked you to learn or remember.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "query": {"type": "STRING", "description": "The concept, topic, or question to look up in memory."}
+            },
+            "required": ["query"]
         }
     },
     {
@@ -796,6 +818,20 @@ class VaniLive:
                 return types.FunctionResponse(
                     id=fc.id, name=name,
                     response={"result": "SUCCESS: VANI is now in normal mode. Resume your friendly, conversational persona and address the user as 'sir'."}
+                )
+
+            if name == "query_memory":
+                q = args.get("query", "")
+                from memory.vector_memory import vector_memory_db
+                matches = vector_memory_db.search_memories(q, limit=5)
+                if matches:
+                    facts = [f"- {m.get('text')}" for m in matches]
+                    mem_content = "Found relevant knowledge from your vector memory:\n" + "\n".join(facts)
+                else:
+                    mem_content = f"No specific memories found matching '{q}' in the vector database."
+                return types.FunctionResponse(
+                    id=fc.id, name=name,
+                    response={"result": mem_content}
                 )
 
             # Intent classification & permissions verification
@@ -1163,28 +1199,9 @@ class VaniLive:
                         tg.create_task(self._stream_screen())
                     ]
                     
-                    # ── Background task suspension logic ──────────────────────
-                    # Only suspend the live session if a background task is STILL
-                    # running after a grace period. Fast LLM/brain calls finish in
-                    # < 5s and should NOT drop the connection. Only long-running
-                    # tasks (GUI loops, mobile control, file ops) trigger suspension.
-                    _SUSPENSION_GRACE_S = 8   # seconds to wait before suspending
+                    # Keep session active while tasks run without artificially disconnecting
                     while True:
                         await asyncio.sleep(1)
-                        if getattr(self, "bg_task_running", False):
-                            # Task just started — wait for the grace period
-                            _waited = 0
-                            while _waited < _SUSPENSION_GRACE_S:
-                                await asyncio.sleep(1)
-                                _waited += 1
-                                if not getattr(self, "bg_task_running", False):
-                                    break  # Task finished in time — keep session alive
-                            else:
-                                # Still running after grace period — suspend
-                                print("[VANI] ⏸️ Suspending live voice mode while working...")
-                                for t in tasks:
-                                    t.cancel()
-                                break
                     
             except asyncio.CancelledError:
                 pass

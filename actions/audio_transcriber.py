@@ -54,8 +54,40 @@ def _transcribe_with_whisper(file_path: str) -> str:
     print("[AudioTranscriber] Whisper OK.")
     return transcript.text.strip()
 
+def _transcribe_with_local_whisper(file_path: str, language: str = "en") -> str:
+    """Offline local transcription using faster-whisper (CPU INT8 / CUDA) or whisper."""
+    try:
+        from faster_whisper import WhisperModel
+        print(f"[AudioTranscriber] Transcribing locally with faster-whisper: {file_path}")
+        model = WhisperModel("base", device="cpu", compute_type="int8")
+        segments, _ = model.transcribe(file_path, language=language)
+        text = " ".join([s.text for s in segments]).strip()
+        if text:
+            print("[AudioTranscriber] Local faster-whisper OK.")
+            return text
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"[AudioTranscriber] faster-whisper error: {e}")
+
+    try:
+        import whisper
+        print(f"[AudioTranscriber] Transcribing locally with OpenAI-Whisper: {file_path}")
+        model = whisper.load_model("base")
+        result = model.transcribe(file_path, language=language)
+        text = result.get("text", "").strip()
+        if text:
+            print("[AudioTranscriber] Local whisper OK.")
+            return text
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"[AudioTranscriber] local whisper error: {e}")
+
+    raise RuntimeError("No local whisper libraries available (install faster-whisper or openai-whisper).")
+
 def transcribe_audio(parameters: dict, player=None) -> str:
-    """Transcribes an audio file. Parameters: file_path, quality (standard|high), language."""
+    """Transcribes an audio file. Prioritizes local offline Whisper, falling back to cloud APIs."""
     file_path = (parameters or {}).get("file_path", "").strip()
     quality = (parameters or {}).get("quality", "standard").lower()
     language = (parameters or {}).get("language", "en").strip()
@@ -65,6 +97,14 @@ def transcribe_audio(parameters: dict, player=None) -> str:
         return f"Error: File not found at path: {file_path}"
     if player:
         player.write_log(f"[Transcriber] Transcribing: {file_path} (quality={quality})")
+
+    # 1. First attempt local offline transcription (zero API cost, zero network lag)
+    try:
+        return _transcribe_with_local_whisper(file_path, language)
+    except Exception as local_err:
+        print(f"[AudioTranscriber] Local transcription unavailable: {local_err}. Trying cloud fallback.")
+
+    # 2. Cloud Fallbacks if local libraries are not installed
     if quality == "high":
         try:
             return _transcribe_with_whisper(file_path)
@@ -77,4 +117,5 @@ def transcribe_audio(parameters: dict, player=None) -> str:
         try:
             return _transcribe_with_whisper(file_path)
         except Exception as e2:
-            return f"Error: All transcription providers failed. Eden AI: {e1}. Whisper: {e2}"
+            return f"Error: All transcription providers failed. Local: {local_err}. Cloud: {e2}"
+

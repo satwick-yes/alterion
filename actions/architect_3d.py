@@ -30,15 +30,15 @@ def generate_3d_model(parameters: dict, player=None, speak=None) -> str:
         response = inference_client.generate_json(
             prompt=prompt,
             system_instruction="You are a precise classifier mapping 3D requests to either parametric (geometric) or organic (textured/character). Return JSON only.",
-            provider="gemini"
+            provider=None
         )
         model_type = response.get("type", "organic").lower()
         reason = response.get("reason", "")
     except Exception as e:
         if player:
-            player.write_log(f"3D_ARCHITECT: Intent classification failed, defaulting to organic. Error: {e}")
-        model_type = "organic"
-        reason = "Fallback to organic due to error."
+            player.write_log(f"3D_ARCHITECT: Intent classification failed, defaulting to parametric. Error: {e}")
+        model_type = "parametric"
+        reason = "Fallback to local parametric due to offline status."
 
     if player:
         player.write_log(f"3D_ARCHITECT: Decided type is {model_type}. Reason: {reason}")
@@ -66,7 +66,7 @@ def _generate_parametric(task: str, player) -> str:
         bpy_script = inference_client.generate_text(
             prompt=prompt,
             system_instruction="You are a Python expert specializing in Blender `bpy` scripting. Output only executable python code.",
-            provider="gemini"
+            provider=None
         )
         
         bpy_script = re.sub(r'```python\n|```python|```', '', bpy_script).strip()
@@ -108,12 +108,13 @@ def _generate_parametric(task: str, player) -> str:
 
 def _generate_organic(task: str, player) -> str:
     if player:
-        player.write_log("3D_ARCHITECT: Triggering Tripo AI Text-to-3D API...")
+        player.write_log("3D_ARCHITECT: Preparing organic 3D model generation...")
 
     import sys
     from pathlib import Path
     
     # Try to load API key from config
+    api_key = ""
     try:
         base_dir = Path(__file__).resolve().parent.parent
         config_path = base_dir / "config" / "api_keys.json"
@@ -123,11 +124,13 @@ def _generate_organic(task: str, player) -> str:
             
         with open(config_path, "r", encoding="utf-8") as f:
             api_key = json.load(f).get("tripo_api_key", "")
-            
-        if not api_key:
-            return "Tripo AI API key ('tripo_api_key') is missing from config/api_keys.json."
-    except Exception as e:
-        return f"Failed to read config/api_keys.json: {e}"
+    except Exception:
+        pass
+
+    if not api_key:
+        if player:
+            player.write_log("3D_ARCHITECT: Tripo API key absent/offline. Redirecting to local parametric procedural generation.")
+        return _generate_parametric(task, player)
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"

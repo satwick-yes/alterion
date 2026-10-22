@@ -133,7 +133,7 @@ def web_search(
                 optimized = wrapper.generate_text(
                     prompt=optimize_prompt,
                     system_instruction="You are an expert search engine query optimizer. Return only the raw query string.",
-                    provider="openai", # Fast and reliable for this
+                    provider="groq",
                     temperature=0.1
                 ).strip(' "\'\n')
                 if optimized:
@@ -157,7 +157,7 @@ def web_search(
         result = wrapper.generate_text(
             prompt=prompt,
             system_instruction="You are a context-aware web search assistant. Synthesize the provided web search results to answer the user's query factually. If the search results do not contain the answer, state that clearly.",
-            provider="openai" # Use OpenAI (GPT-4o) for high-quality synthesis, or fallback to openrouter
+            provider="groq"
         )
         print(f"[WebSearch] ✅ Search & Synthesis OK. ({len(results)} results found)")
         return result

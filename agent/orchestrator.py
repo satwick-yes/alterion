@@ -37,7 +37,7 @@ class SemanticRouter:
                 name="Research Agent",
                 persona="A sophisticated research agent. Highly analytical, objective, detail-oriented, and thorough.",
                 system_prompt="Conduct deep searches, compare products, query flights, weather details, fetch YouTube information, and perform deep learning of concepts. Provide clean summaries with sources.",
-                allowed_tools=["web_search", "weather_report", "flight_finder", "youtube_video", "free_api_query", "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "mcp_execute"]
+                allowed_tools=["web_search", "weather_report", "flight_finder", "youtube_video", "free_api_query", "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "query_memory", "mcp_execute"]
             ),
             "developer": Companion(
                 name="Developer Agent",
@@ -55,7 +55,7 @@ class SemanticRouter:
                 name="LLM Brain Manager",
                 persona="Vani's multi-agent orchestrator for different LLM providers.",
                 system_prompt="Delegate generic reasoning, coding, or data tasks to specialized LLM sub-brains.",
-                allowed_tools=["delegate_to_gemini_brain", "delegate_to_openrouter_brain", "delegate_to_nvidia_brain", "delegate_to_openai_brain", "delegate_to_groq_brain", "delegate_to_deepseek_brain", "delegate_to_cerebras_brain", "delegate_to_mistral_brain", "delegate_to_sambanova_brain", "hf_specialist"]
+                allowed_tools=["delegate_to_local_brain", "delegate_to_gemini_brain", "delegate_to_openrouter_brain", "delegate_to_nvidia_brain", "delegate_to_openai_brain", "delegate_to_groq_brain", "delegate_to_deepseek_brain", "delegate_to_cerebras_brain", "delegate_to_mistral_brain", "delegate_to_sambanova_brain", "hf_specialist"]
             ),
             "3d_architect": Companion(
                 name="3D Architect",

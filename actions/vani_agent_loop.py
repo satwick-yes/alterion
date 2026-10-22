@@ -146,7 +146,7 @@ def _call_reasoning_llm(prompt: str) -> Optional[Dict[str, Any]]:
                 base_url="https://api.groq.com/openai/v1",
             )
             resp = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="qwen/qwen3.8-27b",
                 messages=[
                     {"role": "system", "content": _REASONING_SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},

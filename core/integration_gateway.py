@@ -30,7 +30,7 @@ class IntegrationGateway:
             "Research Agent": [
                 "web_search", "weather_report", "flight_finder", 
                 "youtube_video", "free_api_query", "virtual_hand_control",
-                "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "mcp_execute"
+                "delegate_to_researcher", "memorize_fact", "learn_topic_deeply", "query_memory", "mcp_execute"
             ],
             "Developer Agent": [
                 "code_helper", "dev_agent", "system_shell", "file_controller", "agent_task", "virtual_hand_control",
@@ -42,6 +42,7 @@ class IntegrationGateway:
                 "delegate_to_creator", "save_file", "find_file", "transcribe_audio", "memorize_fact", "mcp_execute"
             ],
             "LLM Brain Manager": [
+                "delegate_to_local_brain",
                 "delegate_to_gemini_brain", "delegate_to_openrouter_brain",
                 "delegate_to_nvidia_brain", "delegate_to_openai_brain",
                 "delegate_to_groq_brain", "delegate_to_deepseek_brain",

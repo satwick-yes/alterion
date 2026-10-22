@@ -64,6 +64,9 @@ class WorkerManager:
             return WorkerManager._run_developer(task, args, player, speak, async_callback)
         elif delegate_name == "delegate_to_creator":
             return WorkerManager._run_creator(task, args, player, speak, async_callback)
+        elif delegate_name == "delegate_to_local_brain":
+            from actions.llm_brains import run_local_brain
+            return WorkerManager._run_in_background(run_local_brain, {"parameters": args, "player": player}, async_callback, "LocalBrain")
         elif delegate_name == "delegate_to_gemini_brain":
             return WorkerManager._run_in_background(run_gemini_brain, {"parameters": args, "player": player}, async_callback, "GeminiBrain")
         elif delegate_name == "delegate_to_openrouter_brain":

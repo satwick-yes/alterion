@@ -3,18 +3,19 @@
         "enabled": true,
         "ollama_url": "http://localhost:11434",
         "preferred_models": [
+            "qwen2.5:7b",
             "qwen2.5-coder:latest",
-            "llama3.3:latest",
-            "llama3:latest",
+            "llama3.1:8b",
+            "llama3.2:3b",
             "mistral:latest",
             "phi3:latest"
         ],
-        "timeout": 5
+        "timeout": 15
     },
     "tier_routing": {
-        "mode": "hybrid_tri_tier",
-        "auto_fallback_to_cloud": true,
-        "fallback_cloud_provider": "groq",
-        "master_cloud_provider": "gemini"
+        "mode": "offline_local_only",
+        "auto_fallback_to_cloud": false,
+        "fallback_cloud_provider": "local",
+        "master_cloud_provider": "local"
     }
 }
